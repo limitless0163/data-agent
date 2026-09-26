@@ -49,9 +49,9 @@ app/
 │   ├── state.py                         # DataAgentState TypedDict
 │   ├── context.py                       # DataAgentContext TypedDict
 │   ├── llm.py                           # Shared ChatOpenAI instance (DeepSeek)
-│   ├── prompt_loader.py                 # load_prompt(name) reads prompts/<name>.prompt
+│   ├── prompt_loader.py                 # load_prompt(name) reads prompts/<name>.md
 │   ├── nodes/                           # 12 graph nodes
-│   └── prompts/                         # 7 prompt templates (plain text)
+│   └── prompts/                         # 7 prompt templates (Markdown)
 ├── core/
 │   ├── config/
 │   │   ├── app_config.{yaml,py}         # Runtime config (DB/Qdrant/ES/embeddings/LLM/logging)
@@ -112,7 +112,7 @@ Each node writes progress events via `runtime.stream_writer({"type": "progress",
 - **Mappers**: always convert via `asdict()` to/from models; do not store ORM instances in agent state.
 - **Repositories**: one per backing store; clients are injected via constructors (see `app/dependencies/query.py`). Do not call client managers directly outside `lifespan`/`scripts`.
 - **Dependency injection**: `app.dependencies.query` provides async generators for MySQL sessions, repositories, and `QueryService`. Compose `get_query_service` whenever you add a new collaborator — do not instantiate in routes.
-- **Prompt loading**: `app/agent/prompt_loader.load_prompt(name)` reads `app/agent/prompts/<name>.prompt` as UTF-8. Keep prompts as plain text files; do not inline them in Python.
+- **Prompt loading**: `app/agent/prompt_loader.load_prompt(name)` reads `app/agent/prompts/<name>.md` as UTF-8. Keep prompts as Markdown files; do not inline them in Python.
 - **JSON serialization**: agent state values (notably `Decimal` from MySQL) need `default=str` when emitting SSE — `QueryService` already does this. Do not regress it (see `meta_knowledge_service._save_tables_to_meta_db` for the `Decimal → float` coercion that fixes the column examples JSON column).
 
 ## Configuration & environment
@@ -129,7 +129,7 @@ Each node writes progress events via `runtime.stream_writer({"type": "progress",
 - **Embedding size = 1024**: matches `BAAI/bge-large-zh-v1.5`. Both `app_config.qdrant.embedding_size` and the Qdrant collection vector size must agree. If you swap the embedding model, update both.
 - **Qdrant collection names**: `data-agent-column`, `data-agent-metric`. ES index: `data-agent-value`. Changing these requires deleting the volumes or migrating manually.
 - **`knowledge-init` one-shot**: `docker-compose.yml` guards the meta build with `/state/ready` (`knowledge_state` volume). To rebuild, `make down -v` (drops volumes) or just delete `knowledge_state` and `make dev` again. Hitting `/api/query` before init finishes will fail because Qdrant/ES/meta-DB are empty.
-- **SQL validation**: `DWMySQLRepository.validate_sql` runs `EXPLAIN <sql>` against the DW. `validate_sql` returning an exception populates `state["error"]` and routes to `correct_sql` — the corrector's prompt lives at `app/agent/prompts/correct_sql.prompt`.
+- **SQL validation**: `DWMySQLRepository.validate_sql` runs `EXPLAIN <sql>` against the DW. `validate_sql` returning an exception populates `state["error"]` and routes to `correct_sql` — the corrector's prompt lives at `app/agent/prompts/correct_sql.md`.
 - **`execute_sql` is read-only by policy**: the prompts forbid INSERT/UPDATE/DELETE/CREATE. The repository does not enforce this — keep the prompts authoritative.
 - **`extract_keywords` POS allowlist**: the `allow_pos` tuple in `extract_keywords.py` (Chinese jieba tags) controls which words reach the recallers. Adding tags changes recall behavior — be deliberate.
 - **Request-scoped state**: each request gets a fresh `DataAgentContext` and `DataAgentState`. Do not cache state across requests.

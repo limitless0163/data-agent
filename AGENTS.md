@@ -86,7 +86,7 @@ The dev compose override (`docker-compose.dev.yml`) replaces the prod frontend w
 - **Backend logging**: loguru with per-request `request_id` injected via `contextvars`; see `backend/app/core/log.py` and `backend/app/core/context.py`. Add `request_id_ctx_var.set(...)` (or rely on `app.main` middleware) and call `logger.info(...)` — do not use `print` for diagnostics.
 - **Frontend**: TypeScript strict, `noEmit`, Next.js App Router, React 19, React-jsx, module resolution `bundler`. Path alias: none defined. Use `frontend/src/services/query.ts` for backend calls.
 - **Secrets**: never commit `.env` or real `app_config.yaml`. `.gitignore` blocks `.env*`, `app_config.yaml`, `.venv`, `node_modules`, `.next`, `*.tsbuildinfo`, `docs/` from root.
-- **Chinese surface**: UI strings, prompts, and field/table descriptions are Chinese. Preserve when editing prompts in `backend/app/agent/prompts/*.prompt`.
+- **Chinese surface**: UI strings, prompts, and field/table descriptions are Chinese. Preserve when editing prompts in `backend/app/agent/prompts/*.md`.
 
 ## API contract
 

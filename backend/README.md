@@ -160,9 +160,9 @@ app/
 │   ├── state.py                         DataAgentState TypedDict
 │   ├── context.py                       DataAgentContext TypedDict
 │   ├── llm.py                           ChatOpenAI 实例（DeepSeek）
-│   ├── prompt_loader.py                 load_prompt(name)：读 prompts/<name>.prompt
+│   ├── prompt_loader.py                 load_prompt(name)：读 prompts/<name>.md
 │   ├── nodes/                           12 个节点（见下）
-│   └── prompts/                         7 个提示词模板（纯文本）
+│   └── prompts/                         7 个 Markdown 提示词模板
 ├── core/
 │   ├── config/                          OmegaConf dataclass schema + YAML + env
 │   ├── clients/embedding_client_manager.py  HuggingFaceEndpointEmbeddings 包装
@@ -246,7 +246,7 @@ async def query(self, query: str):
 
 ## 代码风格
 
-- `app/` 内的注释与 docstring 为中文；编辑 `app/agent/prompts/*.prompt` 时保持中文措辞。
+- `app/` 内的注释与 docstring 为中文；编辑 `app/agent/prompts/*.md` 时保持中文措辞。
 - 4 空格缩进，类型用 `TypedDict` / dataclass；项目未启用 `from __future__ import annotations`，保持 Python 3.11 习惯写法。
 - **不要**在 `app/` 内放 `__init__.py`。
 - **不要**提交 `app_config.yaml`、`__pycache__`、`.venv`、`*.log`。
@@ -259,7 +259,7 @@ async def query(self, query: str):
 - **Qdrant / ES 命名**：collection / index 名称硬编码于 repositories；改名需要重建卷。
 - **`knowledge-init` 幂等**：通过 `knowledge_state` 卷上的 `/state/ready` 标记实现；需要重建请 `docker volume rm data-agent_knowledge_state`（卷名带项目前缀，可用 `docker volume ls` 查询）。
 - **SQL 校验**：`DWMySQLRepository.validate_sql` 通过 `EXPLAIN <sql>` 校验；失败会写 `state["error"]` 并路由到 `correct_sql`，再回到 `execute_sql`。
-- **只读执行**：所有 `INSERT/UPDATE/DELETE/CREATE` 由 `app/agent/prompts/*.prompt` 显式禁止；仓储层不做强制。
+- **只读执行**：所有 `INSERT/UPDATE/DELETE/CREATE` 由 `app/agent/prompts/*.md` 显式禁止；仓储层不做强制。
 - **`extract_keywords` POS allowlist**：`extract_keywords.py` 的 `allow_pos` tuple 控制哪些 jieba 词性到达 recallers；新增词性会改变召回行为，请谨慎。
 - **请求级状态**：每个请求的新 `DataAgentContext` / `DataAgentState`，不要跨请求共享。
 - **JSON 序列化**：`QueryService` 使用 `default=str`，`MetaKnowledgeService._save_tables_to_meta_db` 已对 MySQL `Decimal` 做 `float` 强制转换，确保 `column_info.examples` JSON 列能正常存储。
