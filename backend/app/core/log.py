@@ -6,6 +6,7 @@ from loguru import logger
 from app.core.config.app_config import app_config
 from app.core.context import request_id_ctx_var
 
+
 # 配置日志格式
 log_format = (
     "<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | "
@@ -14,6 +15,7 @@ log_format = (
     "<cyan>{name}</cyan>:<cyan>{function}</cyan>:<cyan>{line}</cyan> - "
     "<level>{message}</level>"
 )
+
 
 # 注入request_id到日志记录中
 def inject_request_id(record):
@@ -25,8 +27,10 @@ logger.remove()
 
 # 给日志打补丁，使其支持注入request_id
 logger = logger.patch(inject_request_id) 
+
 if app_config.logging.console.enable:
     logger.add(sink=sys.stdout, level=app_config.logging.console.level, format=log_format)
+    
 if app_config.logging.file.enable:
     path = Path(app_config.logging.file.path)
     path.mkdir(parents=True, exist_ok=True)
