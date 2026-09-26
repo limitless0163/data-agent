@@ -1,9 +1,12 @@
+from functools import lru_cache
+
 from langchain.chat_models import init_chat_model
 
 from app.core.config.app_config import app_config
 
 
-def create_llm():
+@lru_cache(maxsize=1)
+def get_llm():
     return init_chat_model(
         model=app_config.llm.model_name,
         api_key=app_config.llm.api_key,
@@ -11,6 +14,3 @@ def create_llm():
         temperature=0,
         extra_body={"thinking": {"type": "disabled"}},
     )
-
-
-llm = create_llm()

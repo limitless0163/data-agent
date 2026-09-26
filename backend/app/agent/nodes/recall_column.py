@@ -3,7 +3,7 @@ from langchain_core.prompts import PromptTemplate
 from langgraph.runtime import Runtime
 
 from app.agent.context import DataAgentContext
-from app.agent.llm import llm
+from app.agent.llm import get_llm
 from app.agent.state import DataAgentState
 from app.core.log import logger
 from app.entities.column_info import ColumnInfo
@@ -28,7 +28,7 @@ async def recall_column(state: DataAgentState, runtime: Runtime[DataAgentContext
         )
         output_parser = JsonOutputParser()
 
-        chain = prompt | llm | output_parser
+        chain = prompt | get_llm() | output_parser
 
         result = await chain.ainvoke({"query": query})
 
