@@ -23,9 +23,10 @@ async def recall_metric(state: DataAgentState, runtime: Runtime[DataAgentContext
     try:
         # 使用LLM扩展关键词
         prompt = PromptTemplate(template=load_prompt("extend_keywords_for_metric_recall"), input_variables=["query"])
+        llm = get_llm()
         output_parser = JsonOutputParser()
 
-        chain = prompt | get_llm() | output_parser
+        chain = prompt | llm | output_parser
 
         result = await chain.ainvoke({"query": query})
 
@@ -47,6 +48,7 @@ async def recall_metric(state: DataAgentState, runtime: Runtime[DataAgentContext
         writer({"type": "progress", "step": "召回指标", "status": "success"})
         logger.info(f"召回指标信息：{list(retrieved_metrics_map.keys())}")
         return {"retrieved_metrics": retrieved_metrics}
+    
     except Exception as e:
         writer({"type": "progress", "step": "召回指标", "status": "error"})
         logger.error(f"召回指标信息失败: {str(e)}")

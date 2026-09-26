@@ -1,5 +1,3 @@
-import asyncio
-
 from langchain_core.output_parsers import JsonOutputParser
 from langchain_core.prompts import PromptTemplate
 from langgraph.runtime import Runtime
@@ -24,9 +22,10 @@ async def recall_value(state: DataAgentState, runtime: Runtime[DataAgentContext]
     try:
         # 使用LLM扩展关键词
         prompt = PromptTemplate(template=load_prompt("extend_keywords_for_value_recall"), input_variables=["query"])
+        llm = get_llm()
         output_parser = JsonOutputParser()
 
-        chain = prompt | get_llm() | output_parser
+        chain = prompt | llm | output_parser
 
         result = await chain.ainvoke({"query": query})
 
@@ -34,6 +33,7 @@ async def recall_value(state: DataAgentState, runtime: Runtime[DataAgentContext]
         values_map: dict[str, ValueInfo] = {}
         keywords = list(set(keywords + result))
         logger.info(f"召回字段取值扩展关键词：{keywords}")
+
         for keyword in keywords:
             values: list[ValueInfo] = await value_es_repository.search(keyword)
             for value in values:
@@ -45,8 +45,8 @@ async def recall_value(state: DataAgentState, runtime: Runtime[DataAgentContext]
 
         writer({"type": "progress", "step": "召回字段取值", "status": "success"})
         logger.info(f"召回字段取值：{list(values_map.keys())}")
-
         return {'retrieved_values': retrieved_values}
+    
     except Exception as e:
         writer({"type": "progress", "step": "召回字段取值", "status": "error"})
         logger.error(f"召回字段取值失败: {str(e)}")

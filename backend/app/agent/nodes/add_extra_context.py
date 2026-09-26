@@ -14,14 +14,10 @@ async def add_extra_context(state: DataAgentState, runtime: Runtime[DataAgentCon
     dw_mysql_repository = runtime.context["dw_mysql_repository"]
 
     try:
-        # 当前的时间信息
-        today = datetime.today()
-        # 日期
-        date = today.strftime("%Y-%m-%d")
-        # 星期
-        weekday = today.strftime("%A")
-        # 季度
-        quarter = f"Q{(today.month - 1) // 3 + 1}"
+        today = datetime.today()            # 当前的时间信息
+        date = today.strftime("%Y-%m-%d")           # 日期
+        weekday = today.strftime("%A")              # 星期
+        quarter = f"Q{(today.month - 1) // 3 + 1}"  # 季度
 
         date_info = DateInfoState(date=date, weekday=weekday, quarter=quarter)
 
@@ -34,6 +30,7 @@ async def add_extra_context(state: DataAgentState, runtime: Runtime[DataAgentCon
             "date_info": date_info,
             "db_info": db_info,
         }
+    
     except Exception as e:
         writer({"type": "progress", "step": "添加额外上下文信息", "status": "error"})
         logger.error(f"添加上下文失败:{str(e)}")

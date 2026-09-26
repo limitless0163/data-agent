@@ -25,23 +25,26 @@ async def correct_sql(state: DataAgentState, runtime: Runtime[DataAgentContext])
 
     try:
         prompt = PromptTemplate(template=load_prompt("correct_sql"), input_variables=["query", "metric_infos"])
+        llm = get_llm()
         output_parser = StrOutputParser()
 
-        chain = prompt | get_llm() | output_parser
+        chain = prompt | llm | output_parser
 
-        result = await chain.ainvoke(
-            {"query": query,
-             "table_infos": yaml.dump(table_infos, allow_unicode=True, sort_keys=False),
-             "metric_infos": yaml.dump(metric_infos, allow_unicode=True, sort_keys=False),
-             "date_info": yaml.dump(date_info, allow_unicode=True, sort_keys=False),
-             "db_info": yaml.dump(db_info, allow_unicode=True, sort_keys=False),
-             "sql": sql,
-             "error": error
-             })
+        result = await chain.ainvoke({
+            "query": query,
+            "table_infos": yaml.dump(table_infos, allow_unicode=True, sort_keys=False),
+            "metric_infos": yaml.dump(metric_infos, allow_unicode=True, sort_keys=False),
+            "date_info": yaml.dump(date_info, allow_unicode=True, sort_keys=False),
+            "db_info": yaml.dump(db_info, allow_unicode=True, sort_keys=False),
+            "sql": sql,
+            "error": error
+        })
+        
         writer({"type": "progress", "step": "校正SQL", "status": "success"})
         logger.info(f"校正后的SQL: {result}")
         return {"sql": result}
+    
     except Exception as e:
         writer({"type": "progress", "step": "校正SQL", "status": "error"})
-        logger.error(f"校正SQL失败:{str(e)}")
+        logger.error(f"校正SQL失败: {str(e)}")
         raise

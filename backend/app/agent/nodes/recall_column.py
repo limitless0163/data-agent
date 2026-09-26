@@ -26,9 +26,10 @@ async def recall_column(state: DataAgentState, runtime: Runtime[DataAgentContext
             template=load_prompt("extend_keywords_for_column_recall"),
             input_variables=["query"],
         )
+        llm = get_llm()
         output_parser = JsonOutputParser()
 
-        chain = prompt | get_llm() | output_parser
+        chain = prompt | llm | output_parser
 
         result = await chain.ainvoke({"query": query})
 
@@ -37,6 +38,7 @@ async def recall_column(state: DataAgentState, runtime: Runtime[DataAgentContext
 
         keywords = list(set(keywords + result))
         logger.info(f"召回字段信息扩展关键词：{keywords}")
+
         for keyword in keywords:
             embedding = await embedding_client.aembed_query(keyword)
             payloads: list[ColumnInfo] = await column_qdrant_repository.search(
@@ -52,6 +54,7 @@ async def recall_column(state: DataAgentState, runtime: Runtime[DataAgentContext
         writer({"type": "progress", "step": "召回字段", "status": "success"})
         logger.info(f"召回字段信息：{list(retrieved_columns_map.keys())}")
         return {"retrieved_columns": retrieved_columns}
+    
     except Exception as e:
         writer({"type": "progress", "step": "召回字段", "status": "error"})
         logger.error(f"召回字段信息失败: {str(e)}")

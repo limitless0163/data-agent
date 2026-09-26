@@ -21,23 +21,24 @@ async def generate_sql(state: DataAgentState, runtime: Runtime[DataAgentContext]
     db_info = state["db_info"]
 
     try:
-        prompt = PromptTemplate(template=load_prompt("generate_sql"),
-                                input_variables=["query", "table_infos", "metric_infos", "date_info", "db_info"])
+        prompt = PromptTemplate(template=load_prompt("generate_sql"), input_variables=["query", "table_infos", "metric_infos", "date_info", "db_info"])
+        llm = get_llm()
         output_parser = StrOutputParser()
 
-        chain = prompt | get_llm() | output_parser
+        chain = prompt | llm | output_parser
 
-        result = await chain.ainvoke(
-            {"query": query,
-             "table_infos": yaml.dump(table_infos, allow_unicode=True, sort_keys=False),
-             "metric_infos": yaml.dump(metric_infos, allow_unicode=True, sort_keys=False),
-             "date_info": yaml.dump(date_info, allow_unicode=True, sort_keys=False),
-             "db_info": yaml.dump(db_info, allow_unicode=True, sort_keys=False)
-             })
+        result = await chain.ainvoke({
+            "query": query,
+            "table_infos": yaml.dump(table_infos, allow_unicode=True, sort_keys=False),
+            "metric_infos": yaml.dump(metric_infos, allow_unicode=True, sort_keys=False),
+            "date_info": yaml.dump(date_info, allow_unicode=True, sort_keys=False),
+            "db_info": yaml.dump(db_info, allow_unicode=True, sort_keys=False)
+        })
 
         writer({"type": "progress", "step": "生成SQL", "status": "success"})
         logger.info(f"生成的SQL: {result}")
         return {"sql": result}
+    
     except Exception as e:
         writer({"type": "progress", "step": "生成SQL", "status": "error"})
         logger.error(f"生成SQL失败: {str(e)}")

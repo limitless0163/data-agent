@@ -18,6 +18,7 @@ async def validate_sql(state: DataAgentState, runtime: Runtime[DataAgentContext]
         writer({"type": "progress", "step": "验证SQL", "status": "success"})
         logger.info(f"SQL验证成功: {sql}")
         return {"error": None}
+    
     except Exception as e:
         writer({"type": "progress", "step": "验证SQL", "status": "error"})
         logger.error(f"SQL验证失败: {sql}")
