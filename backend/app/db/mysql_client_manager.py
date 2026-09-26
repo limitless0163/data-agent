@@ -1,7 +1,5 @@
-import asyncio
 from typing import Optional
 
-from sqlalchemy import text
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncEngine, async_sessionmaker
 
 from app.core.config.app_config import DBConfig, app_config
@@ -31,16 +29,3 @@ class MysqlClientManager:
 
 dw_mysql_client_manager = MysqlClientManager(app_config.db_dw)
 meta_mysql_client_manager = MysqlClientManager(app_config.db_meta)
-
-if __name__ == '__main__':
-    meta_mysql_client_manager.init()
-
-
-    async def test():
-        async with meta_mysql_client_manager.session_factory() as session:
-            result = await session.execute(text("select * from table_info limit 10"))
-            rows = result.fetchall()
-            print(rows)
-
-
-    asyncio.run(test())

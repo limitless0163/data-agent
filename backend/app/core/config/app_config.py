@@ -99,6 +99,3 @@ app_config.embedding.port = int(os.getenv("DATA_AGENT_EMBEDDING_PORT", app_confi
 app_config.es.host = os.getenv("DATA_AGENT_ES_HOST", app_config.es.host)
 app_config.es.port = int(os.getenv("DATA_AGENT_ES_PORT", app_config.es.port))
 app_config.llm.api_key = os.getenv("DATA_AGENT_LLM_API_KEY", os.getenv("DEEPSEEK_API_KEY", app_config.llm.api_key))
-
-if __name__ == '__main__':
-    print(app_config.es.host)
