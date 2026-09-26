@@ -58,6 +58,7 @@ env/
 ENV/
 .uv/
 .python-version
+!backend/.python-version
 
 # ===== 测试 / 覆盖率 =====
 .coverage
@@ -114,3 +115,4 @@ uploads/
 
 # ===== 项目文档 =====
 docs/
+backend/app/core/config/app_config.yaml
