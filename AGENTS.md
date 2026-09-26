@@ -10,7 +10,7 @@ The repo follows `docs/ARCHITECTURE_INSTRUCTIONS.md` (reorganization reference; 
 
 ## Service topology
 
-Compose services defined in `docker-compose.yml` (production) and `docker-compose.dev.yml` (dev override). One shared `backend-environment` YAML anchor feeds both `knowledge-init` and `backend`.
+Compose services are defined in `docker-compose.yml`; the `dev` and `prod` profiles select the matching frontend. One shared `backend-environment` YAML anchor feeds both `knowledge-init` and `backend`.
 
 | Service        | Image / build                                 | Host port | Notes                                                                                       |
 | -------------- | --------------------------------------------- | --------- | ------------------------------------------------------------------------------------------- |
@@ -20,7 +20,8 @@ Compose services defined in `docker-compose.yml` (production) and `docker-compos
 | `embeddings`   | `ghcr.io/huggingface/text-embeddings-inference:cpu-arm64-1.9` | (internal)| Serves `BAAI/bge-large-zh-v1.5`. Model cached in `embedding_model_cache` volume.            |
 | `knowledge-init` | `./backend/Dockerfile` (restart: no)        | (one-shot)| Waits for deps, then runs `scripts.wait_and_build_meta`. Skipped if `/state/ready` exists.  |
 | `backend`      | `./backend/Dockerfile`                        | 8000      | FastAPI + uvicorn. Starts only after MySQL healthy **and** `knowledge-init` succeeded.     |
-| `frontend`     | `frontend/Dockerfile` (prod) / `Dockerfile.dev` | 8080 → 3000 | Next.js. Dev compose mounts `frontend/` for HMR; prod uses standalone build.            |
+| `frontend`     | `frontend/Dockerfile` (`production` target, `prod` profile) | 8080 → 3000 | Next.js standalone production image.                        |
+| `frontend-dev` | `frontend/Dockerfile` (`dev` target, `dev` profile) | 8080 → 3000 | Next.js dev server; mounts `frontend/` for HMR.              |
 
 External entrypoint: **http://localhost:8080** (frontend). Frontend's `src/app/api/query/route.ts` proxies SSE to `http://backend:8000` (Compose DNS) or `http://localhost:8000` (local dev).
 
@@ -33,7 +34,7 @@ infra/     Docker Compose assets.
   docker/mysql/init.sql          DW seed data + meta schema (run on first MySQL start).
 docs/      Project conventions (ARCHITECTURE_INSTRUCTIONS, COMMIT_INSTRUCTIONS, README_INSTRUCTIONS, AGENT_INSTRUCTIONS).
 scripts/   Cross-service tooling. Currently `smoke.sh` for HTTP probes.
-docker-compose.yml, docker-compose.dev.yml, Makefile, .env.example, README.md
+docker-compose.yml, Makefile, .env.example, README.md
 ```
 
 There is intentionally no `tests/`, `components/`, `hooks/`, `middleware/`, `migrations/`, `stores/`, or `utils/` directory yet — they are created only when real content requires them (per `docs/ARCHITECTURE_INSTRUCTIONS.md`).
@@ -57,7 +58,7 @@ The root `Makefile` wraps Docker Compose; module directories expose Python/npm t
 | Stop (keep volumes/containers)| `make stop` (alias: `make down`)             |
 | Restart services              | `make restart`                               |
 | Service status                | `make ps`                                    |
-| Tail logs                     | `make logs [SERVICE=frontend]`               |
+| Tail logs                     | `make logs [SERVICE=frontend-dev]`            |
 | HTTP smoke test (frontend + backend `/api/query`) | `make smoke` (`./scripts/smoke.sh`) |
 | Frontend typecheck            | `make typecheck`                             |
 | Build prod images             | `make build`                                 |
@@ -71,7 +72,7 @@ For native iteration, see `backend/AGENTS.md` (uvicorn, `uv sync`) and `frontend
 3. `make dev` — first run pulls images, downloads the BGE model (~hundreds of MB), and waits for `knowledge-init` to build the meta knowledge base from `backend/app/core/config/meta_config.yaml`. Watch with `make ps` / `make logs`.
 4. Open http://localhost:8080.
 
-The dev compose override (`docker-compose.dev.yml`) replaces the prod frontend with `frontend/Dockerfile.dev` (volume-mounts `./frontend:/app`, `WATCHPACK_POLLING=true`, anon-volumes for `node_modules` and `.next`).
+`make dev` enables the `dev` Compose profile (`frontend-dev`); `make prod` enables `prod` (`frontend`). Both use targets in `frontend/Dockerfile`. The development frontend mounts `./frontend:/app`, uses `WATCHPACK_POLLING=true`, and keeps `node_modules` and `.next` in anonymous volumes.
 
 ## Configuration
 

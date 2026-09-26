@@ -90,12 +90,33 @@ services:
         condition: service_completed_successfully
 
   frontend:
+    profiles: ["prod"]
     build:
       context: .
       dockerfile: frontend/Dockerfile
+      target: production
     restart: unless-stopped
     environment:
       API_BASE_URL: http://backend:8000
+    depends_on:
+      - backend
+    ports:
+      - "8080:3000"
+
+  frontend-dev:
+    profiles: ["dev"]
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+      target: dev
+    restart: unless-stopped
+    environment:
+      API_BASE_URL: http://backend:8000
+      WATCHPACK_POLLING: "true"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+      - /app/.next
     depends_on:
       - backend
     ports:

@@ -7,8 +7,8 @@ For repo-wide orientation (Compose topology, env vars, Make targets), see [AGENT
 ## Stack
 
 - **Next.js 16.3** (App Router), **React 19.3**, **TypeScript 5.9**.
-- **Node 22** (matches both `Dockerfile` and `Dockerfile.dev`).
-- `next.config.ts` sets `output: "standalone"` for the production image — keep it that way; the prod `Dockerfile` depends on `.next/standalone/server.js`.
+- **Node 22** (used by both targets in `Dockerfile`).
+- `next.config.ts` sets `output: "standalone"` for the production image — keep it that way; the `production` target in `Dockerfile` depends on `.next/standalone/server.js`.
 - No CSS framework, no state library, no UI kit. Global stylesheet at `src/styles/style.css`. Pure CSS variables on `:root`, light theme only.
 - No path aliases; imports use relative paths (`../../services/query`, `../../types/query`).
 
@@ -24,9 +24,9 @@ Run from `frontend/` unless noted.
 | Start prod server        | `npm run start`                 |
 | Type-check               | `npm run typecheck` (`tsc --noEmit`) |
 
-The dev compose override (`docker-compose.dev.yml`) runs `npm run dev -- --hostname 0.0.0.0` inside the container with the project mounted at `/app` (anon-volumes for `node_modules` and `.next`) and `WATCHPACK_POLLING=true`.
+The `dev` Compose profile builds the `dev` target from `Dockerfile` and runs `npm run dev -- --hostname 0.0.0.0` in `frontend-dev`, with the project mounted at `/app` (anonymous volumes for `node_modules` and `.next`) and `WATCHPACK_POLLING=true`. The `prod` profile builds the standalone `production` target for `frontend`.
 
-Repo-root shortcuts: `make dev` (starts Compose with HMR), `make typecheck` (execs `npm run typecheck` in the frontend container), `make logs SERVICE=frontend`.
+Repo-root shortcuts: `make dev` (starts the `dev` profile with HMR), `make typecheck` (execs `npm run typecheck` in `frontend-dev`), `make logs SERVICE=frontend-dev`.
 
 ## Source layout
 
@@ -44,8 +44,7 @@ src/
 │   └── style.css                 # Global CSS
 └── types/
     └── query.ts                  # QueryEvent, ChatMessage, StepStatus
-Dockerfile                        # Production image (multi-stage: build → standalone run)
-Dockerfile.dev                    # Dev image with bind mounts
+Dockerfile                        # Shared multi-stage image: dev and production targets
 next.config.ts                    # output: "standalone"
 tsconfig.json                     # strict, noEmit, jsx: "react-jsx"
 ```

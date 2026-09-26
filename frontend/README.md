@@ -7,14 +7,14 @@ TypeScript + React 19 + Next.js 16（App Router）实现的单页聊天界面。
 | 框架 | Next.js 16（App Router） |
 | UI 库 | React 19.3 |
 | 语言 | TypeScript 5.9（`strict`、`noEmit`、`moduleResolution: "bundler"`） |
-| 运行时 | Node 22（Dockerfile 与 `Dockerfile.dev` 均一致） |
+| 运行时 | Node 22（`Dockerfile` 的 dev / production targets） |
 | 样式 | 原生 CSS + `:root` CSS 变量（`src/styles/style.css`，仅亮色主题） |
 | 状态管理 | 仅 React Hooks（`useState` + `useRef`） |
 | 路径别名 | 无；统一使用相对路径 |
 
 ## 先决条件
 
-- Node 22（`Dockerfile` 与 `Dockerfile.dev` 基镜像：`node:22-alpine`）
+- Node 22（`Dockerfile` 基镜像：`node:22-alpine`）
 - npm（仓库提交了 `package-lock.json`，使用 `npm ci`）
 - 后端 API 在本地 `http://localhost:8000` 运行，或通过 `API_BASE_URL` 指向远程后端
 
@@ -41,8 +41,8 @@ npm ci
 | 命令 | 说明 |
 | --- | --- |
 | `make dev` / `make up` | 通过 Compose 启动开发栈，前端容器挂载源码 + 启用 `WATCHPACK_POLLING` |
-| `make typecheck` | `exec` 进前端容器执行 `npm run typecheck` |
-| `make logs SERVICE=frontend` | 查看前端日志 |
+| `make typecheck` | `exec` 进 `frontend-dev` 容器执行 `npm run typecheck` |
+| `make logs SERVICE=frontend-dev` | 查看开发前端日志 |
 | `make smoke` | HTTP 探活（`/`、`/api/query` 校验） |
 
 ## 路由
@@ -64,9 +64,9 @@ npm ci
 
 | 变量 | 作用范围 | 默认 | 说明 |
 | --- | --- | --- | --- |
-| `API_BASE_URL` | 服务端（路由处理器内） | `http://localhost:8000` | 转发到后端的基础 URL。Compose 中设为 `http://backend:8000` |
-| `NODE_ENV` | 服务端 | — | dev Compose 设为 `development` |
-| `WATCHPACK_POLLING` | dev Compose | `"true"` | 启用 Webpack 文件轮询，便于在挂载卷上做 HMR |
+| `API_BASE_URL` | 服务端（路由处理器内） | `http://localhost:8000` | 转发到后端的基础 URL。两个 Compose profile 中均设为 `http://backend:8000` |
+| `NODE_ENV` | 服务端 | — | `Dockerfile` 的 `dev` target 设为 `development` |
+| `WATCHPACK_POLLING` | `dev` profile | `"true"` | 启用 Webpack 文件轮询，便于在挂载卷上做 HMR |
 
 目前没有使用 `NEXT_PUBLIC_*` 变量，因此不会暴露到客户端 bundle。
 
@@ -87,8 +87,7 @@ frontend/
 │   │   └── style.css                 # 全局样式（CSS 变量 + 布局）
 │   └── types/
 │       └── query.ts                  # QueryEvent、ChatMessage、StepStatus
-├── Dockerfile                        # 生产镜像：multi-stage build → standalone
-├── Dockerfile.dev                    # 开发镜像：npm run dev + 挂载 ./frontend
+├── Dockerfile                        # 多阶段镜像：dev 与 production targets
 ├── next.config.ts                    # output: "standalone"
 ├── package.json
 ├── tsconfig.json                     # strict, noEmit, jsx: "react-jsx"
@@ -117,20 +116,23 @@ frontend/
 ## 开发注意事项
 
 - `tsconfig.json` 启用了 `strict` + `noEmit`，类型错误会直接阻塞 `tsc --noEmit` 与 `npm run build`。`.next/types/**/*.ts` 与 `.next/dev/types/**/*.ts` 是 Next.js 生成的类型文件，已被 git 忽略。
-- `next.config.ts` 目前只有 `output: "standalone"`，生产 `Dockerfile` 依赖 `.next/standalone/server.js`；修改此配置前请阅读根 `AGENTS.md`。
+- `next.config.ts` 目前只有 `output: "standalone"`，`Dockerfile` 的 `production` target 依赖 `.next/standalone/server.js`；修改此配置前请阅读根 `AGENTS.md`。
 - 无路径别名；统一使用相对路径（`../../services/query` 等）。
 - 不要把 `response.body` 在路由处理器里 `await response.text()` —— SSE 必须流式透传。
 - 修改 `src/types/query.ts` 时同步检查后端 `backend/app/services/query_service.py` 与 `backend/app/agent/nodes/*.py`。
 
 ## 与 Compose 的集成
 
-`docker-compose.yml` 中 prod 前端：构建 `frontend/Dockerfile`，启动后从容器内 `:3000` 通过端口映射暴露到宿主机 `:8080`，环境变量 `API_BASE_URL=http://backend:8000`。
+`docker-compose.yml` 通过同一个 `frontend/Dockerfile` 的不同 target 配置两种前端：
 
-`docker-compose.dev.yml` 覆盖 prod frontend 服务：
+- `prod` profile 的 `frontend` 构建 `production` target（standalone 镜像），从容器内 `:3000` 通过端口映射暴露到宿主机 `:8080`；
+- `dev` profile 的 `frontend-dev` 构建 `dev` target，运行 `npm run dev -- --hostname 0.0.0.0`，同样映射到宿主机 `:8080`。
 
-- 使用 `frontend/Dockerfile.dev`；
+开发前端配置：
+
+- 使用 `frontend/Dockerfile` 的 `dev` target；
 - 启动命令 `npm run dev -- --hostname 0.0.0.0`；
-- 环境变量 `NODE_ENV=development`、`WATCHPACK_POLLING=true`；
+- `dev` target 设置 `NODE_ENV=development`，Compose 设置 `WATCHPACK_POLLING=true`；
 - 挂载 `./frontend:/app`（匿名卷覆盖 `node_modules` 与 `.next`，避免宿主机与容器依赖冲突）。
 
 ## 相关文档

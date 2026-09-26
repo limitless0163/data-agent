@@ -6,7 +6,7 @@
 - 后端：Python 3.11 + FastAPI + LangGraph + SQLAlchemy（asyncmy）
 - 依赖服务：MySQL 8.4（`meta` + `dw` 双库）、Elasticsearch 8.19、Qdrant 1.16、text-embeddings-inference（`BAAI/bge-large-zh-v1.5`）
 - LLM：DeepSeek（`deepseek-flash`）
-- 编排：Docker Compose（dev / prod 两个 Compose 文件 + Makefile 命令面）
+- 编排：Docker Compose（单 Compose 文件，通过 profile 区分 dev / prod）
 
 外部访问入口：[http://localhost:8080](http://localhost:8080)（前端 Next.js，端口 8080 → 容器内 3000）。
 
@@ -22,9 +22,10 @@
 | `embeddings` | `ghcr.io/huggingface/text-embeddings-inference:cpu-arm64-1.9` | 容器内 80 | 提供 `BAAI/bge-large-zh-v1.5` 向量服务 |
 | `knowledge-init` | `./backend/Dockerfile`（`restart: no`） | — | 等待依赖就绪后执行 `scripts.wait_and_build_meta`；`/state/ready` 已存在则跳过 |
 | `backend` | `./backend/Dockerfile` | 容器内 8000 | FastAPI + uvicorn，仅在 MySQL 健康且 `knowledge-init` 成功后启动 |
-| `frontend` | `frontend/Dockerfile`（prod） / `Dockerfile.dev` | 8080 → 3000 | Next.js；dev Compose 挂载源码支持 HMR |
+| `frontend` | `frontend/Dockerfile` 的 `production` target（`prod` profile） | 8080 → 3000 | Next.js standalone 生产镜像 |
+| `frontend-dev` | `frontend/Dockerfile` 的 `dev` target（`dev` profile） | 8080 → 3000 | Next.js 开发服务器；挂载源码支持 HMR |
 
-`docker-compose.yml` 与 `docker-compose.dev.yml` 共享一份 `&backend-environment` YAML 锚点，把 MySQL/Qdrant/ES/Embeddings/DeepSeek 的连接信息同时注入 `knowledge-init` 和 `backend`。
+`docker-compose.yml` 通过 `dev` / `prod` profile 选择开发或生产前端；`&backend-environment` YAML 锚点把 MySQL/Qdrant/ES/Embeddings/DeepSeek 的连接信息同时注入 `knowledge-init` 和 `backend`。
 
 ### 请求链路
 
@@ -54,7 +55,6 @@ Browser (8080)
 ├── scripts/
 │   └── smoke.sh    HTTP 探活脚本（make smoke）
 ├── docker-compose.yml
-├── docker-compose.dev.yml
 ├── Makefile
 ├── .env.example
 ├── AGENTS.md       编码 Agent 协作指南（根）
@@ -93,7 +93,7 @@ make dev       # 或 make up；别名相同
 ```bash
 make ps        # 查看各服务状态
 make logs      # 跟踪日志
-make logs SERVICE=frontend   # 只看前端
+make logs SERVICE=frontend-dev   # 只看开发前端
 make logs SERVICE=knowledge-init   # 查看元知识库初始化
 ```
 
@@ -105,7 +105,7 @@ make logs SERVICE=knowledge-init   # 查看元知识库初始化
 make prod
 ```
 
-使用 `docker-compose.yml` 中的 `frontend/Dockerfile`（多阶段构建 standalone 镜像），不挂载源码。
+`make prod` 启用 `prod` profile，使用 `frontend/Dockerfile` 的 `production` target（多阶段构建 standalone 镜像），不挂载源码。
 
 ### 4. 验证
 
@@ -154,7 +154,7 @@ make dev
 | 停止（保留卷与容器） | `make stop` / `make down` |
 | 重启 | `make restart [SERVICE=backend]` |
 | 查看状态 | `make ps` |
-| 跟踪日志 | `make logs [SERVICE=frontend]` |
+| 跟踪日志 | `make logs [SERVICE=frontend-dev]` |
 | HTTP 探活 | `make smoke` |
 | 前端类型检查 | `make typecheck` |
 | 构建生产镜像 | `make build` |
