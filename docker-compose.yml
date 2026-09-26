@@ -97,10 +97,12 @@ services:
       context: .
       dockerfile: frontend/Dockerfile
     restart: unless-stopped
+    environment:
+      API_BASE_URL: http://backend:8000
     depends_on:
       - backend
     ports:
-      - "8080:80"
+      - "8080:3000"
 
 volumes:
   mysql_data:

@@ -7,4 +7,6 @@ scripts
 **/.venv
 **/node_modules
 **/dist
+**/.next
+**/*.tsbuildinfo
 infra/docker/mysql
