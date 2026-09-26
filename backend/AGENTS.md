@@ -78,6 +78,7 @@ app/
 scripts/
 ├── build_meta_knowledge.py              # Initializes managers + invokes MetaKnowledgeService
 └── wait_and_build_meta.py               # Polls MySQL/ES/Qdrant/embeddings, then builds
+tests/                                    # 后端单元测试、接口测试
 Dockerfile                                # python:3.11.2-bullseye + uv + uvicorn
 pyproject.toml                            # PEP 621 deps
 ```
@@ -135,7 +136,11 @@ Each node writes progress events via `runtime.stream_writer({"type": "progress",
 
 ## Tests / verification
 
-There is no unit test suite. Verification is done through Compose:
+Backend unit tests live in `tests/` and use the standard-library `unittest` runner:
+
+- `uv run python -m unittest discover -s tests`
+
+The suite should not require running Compose services. End-to-end verification is done through Compose:
 
 - `make smoke` (runs `scripts/smoke.sh`) — checks frontend root (`/` → 200), `backend /openapi.json` advertises `/api/query`, and `POST /api/query {}` returns `422` (Pydantic validation, not 500).
 - `make logs SERVICE=backend` — inspect agent progress events and SQL generation.
