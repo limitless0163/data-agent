@@ -55,7 +55,7 @@ app/
 ├── core/
 │   ├── config/
 │   │   ├── app_config.{yaml,py}         # Runtime config (DB/Qdrant/ES/embeddings/LLM/logging)
-│   │   ├── app_config.example.yaml      # Checked-in template (read-only inside Compose)
+│   │   ├── app_config.yaml               # Shared non-secret runtime defaults
 │   │   └── meta_config.{yaml,py}        # Meta knowledge source
 │   ├── clients/embedding_client_manager.py  # Wraps HuggingFaceEndpointEmbeddings
 │   ├── lifespan.py                      # init/close all client managers on FastAPI startup/shutdown
@@ -117,11 +117,9 @@ Each node writes progress events via `runtime.stream_writer({"type": "progress",
 
 ## Configuration & environment
 
-- `app/core/config/app_config.py` merges:
-  1. `app_config.yaml` (loaded from `Path(__file__).with_name('app_config.yaml')` — falls back to example if no local copy),
-  2. env-var overrides: `DATA_AGENT_DB_META_HOST/PORT`, `DATA_AGENT_DB_DW_HOST/PORT`, `DATA_AGENT_DB_USER`, `DATA_AGENT_DB_PASSWORD`, `DATA_AGENT_QDRANT_HOST/PORT`, `DATA_AGENT_EMBEDDING_HOST/PORT`, `DATA_AGENT_ES_HOST/PORT`, `DATA_AGENT_LLM_API_KEY` (falls back to `DEEPSEEK_API_KEY`).
+- `app/core/config/app_config.py` loads the tracked `app_config.yaml`, then applies env-var overrides: `DATA_AGENT_DB_META_HOST/PORT`, `DATA_AGENT_DB_DW_HOST/PORT`, `DATA_AGENT_DB_USER`, `DATA_AGENT_DB_PASSWORD`, `DATA_AGENT_QDRANT_HOST/PORT`, `DATA_AGENT_EMBEDDING_HOST/PORT`, `DATA_AGENT_ES_HOST/PORT`, `DATA_AGENT_LLM_API_KEY` (falls back to `DEEPSEEK_API_KEY`).
 - `meta_config.yaml` is NOT overridden by env vars — it is the schema knowledge source loaded by `scripts.wait_and_build_meta` → `MetaKnowledgeService.build`.
-- Local dev: copy `app_config.example.yaml` → `app_config.yaml` (git-ignored, `.dockerignore`-ignored) and edit. Inside Compose, the example is mounted read-only; env vars supply everything.
+- Keep only shareable defaults in the tracked `app_config.yaml`; provide API keys and passwords through `.env` / environment variables.
 - `app_config.embedding.port` default in the example file is `8081`, but inside Compose it is overridden to `80` (the HF text-embeddings-inference default).
 
 ## Important invariants
@@ -151,11 +149,11 @@ The suite should not require running Compose services. End-to-end verification i
 - Comments and docstrings inside `app/` are in Chinese; preserve them. New agent nodes should follow the existing pattern: `runtime.stream_writer` progress → `try/except` → `logger.info` on success → `raise` on failure.
 - No formatter/linter wired in. Match the surrounding style: 4-space indent, type hints via `TypedDict` / `from __future__ import annotations` is not used — keep Python 3.11 idioms.
 - Do not introduce `__init__.py` inside `app/`.
-- Do not commit `app_config.yaml`, `__pycache__`, `.venv`, or `*.log`.
+- Do not commit `.env`, real API keys, or real passwords; `app_config.yaml` contains only shareable defaults. Do not commit `__pycache__`, `.venv`, or `*.log`.
 
 ## Local native workflow (no Compose)
 
-1. `cp app/core/config/app_config.example.yaml app/core/config/app_config.yaml` and edit host/port/passwords.
+1. Edit `app/core/config/app_config.yaml` for non-secret defaults; provide passwords and API keys through environment variables.
 2. Have MySQL/ES/Qdrant/embeddings running locally; the embeddings container exposes `BAAI/bge-large-zh-v1.5` on port 80 (change `app_config.embedding.port` to 8081 for native).
 3. `uv sync`.
 4. Seed MySQL with `infra/docker/mysql/init.sql`.

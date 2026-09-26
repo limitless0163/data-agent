@@ -128,9 +128,8 @@ make typecheck # exec 进前端容器跑 tsc --noEmit
 
 ### 后端 YAML
 
-- `backend/app/core/config/app_config.example.yaml` — 提交到 git 的模板，Compose 默认以只读方式挂载到容器内同名路径。
-- 本地原生开发：复制为 `backend/app/core/config/app_config.yaml`（被 `.gitignore` 与 `backend/.dockerignore` 同时忽略），按本地环境修改。
-- 运行时通过 `DATA_AGENT_DB_*` / `DATA_AGENT_QDRANT_*` / `DATA_AGENT_EMBEDDING_*` / `DATA_AGENT_ES_*` / `DATA_AGENT_LLM_API_KEY` 覆盖 YAML 中的字段。`app/core/config/app_config.py` 集中处理。
+- `backend/app/core/config/app_config.yaml` — 提交到 git 的基础配置，Compose 和本地开发共用。
+- API key 等秘密不要写入这个文件；通过 `.env` 或环境变量提供。运行时通过 `DATA_AGENT_DB_*` / `DATA_AGENT_QDRANT_*` / `DATA_AGENT_EMBEDDING_*` / `DATA_AGENT_ES_*` / `DATA_AGENT_LLM_API_KEY` 覆盖 YAML 中的字段。`app/core/config/app_config.py` 集中处理。
 
 ### 元知识源
 

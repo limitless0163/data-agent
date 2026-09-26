@@ -76,7 +76,7 @@ The dev compose override (`docker-compose.dev.yml`) replaces the prod frontend w
 ## Configuration
 
 - **Runtime env**: `.env` (git-ignored). Required: `DEEPSEEK_API_KEY`, `DATA_AGENT_DB_PASSWORD`. Defaults exist for `MYSQL_ROOT_PASSWORD` and `DATA_AGENT_DB_PASSWORD`.
-- **Backend YAML**: `backend/app/core/config/app_config.example.yaml` is the template checked into git. The Compose services mount it read-only at `app/core/config/app_config.yaml` inside the container. For native local dev, copy it to `app_config.yaml` (same dir; ignored by git and Docker). Environment overrides via `DATA_AGENT_DB_*`, `DATA_AGENT_QDRANT_*`, `DATA_AGENT_EMBEDDING_*`, `DATA_AGENT_ES_*`, `DATA_AGENT_LLM_API_KEY` are applied in `backend/app/core/config/app_config.py`.
+- **Backend YAML**: `backend/app/core/config/app_config.yaml` is tracked and supplies non-secret defaults. Runtime secrets such as the LLM API key should come from `.env` / environment variables. Overrides via `DATA_AGENT_DB_*`, `DATA_AGENT_QDRANT_*`, `DATA_AGENT_EMBEDDING_*`, `DATA_AGENT_ES_*`, `DATA_AGENT_LLM_API_KEY` are applied in `backend/app/core/config/app_config.py`.
 - **Meta knowledge source**: `backend/app/core/config/meta_config.yaml` (defines tables, columns, metrics). This is the single source of truth for the metadata knowledge base and is what `knowledge-init` ingests.
 - **Frontend backend URL**: `API_BASE_URL` env var (default `http://localhost:8000`; set to `http://backend:8000` inside Compose).
 
@@ -85,7 +85,7 @@ The dev compose override (`docker-compose.dev.yml`) replaces the prod frontend w
 - **Python**: 3.11.2, managed by `uv` (lockfile: `backend/uv.lock`; both `uv sync --frozen` and the Docker build rely on it). PEP 420 namespace packages are in use — `app.*` is the implicit package root; do not add `__init__.py` files inside `app/`.
 - **Backend logging**: loguru with per-request `request_id` injected via `contextvars`; see `backend/app/core/log.py` and `backend/app/core/context.py`. Add `request_id_ctx_var.set(...)` (or rely on `app.main` middleware) and call `logger.info(...)` — do not use `print` for diagnostics.
 - **Frontend**: TypeScript strict, `noEmit`, Next.js App Router, React 19, React-jsx, module resolution `bundler`. Path alias: none defined. Use `frontend/src/services/query.ts` for backend calls.
-- **Secrets**: never commit `.env` or real `app_config.yaml`. `.gitignore` blocks `.env*`, `app_config.yaml`, `.venv`, `node_modules`, `.next`, `*.tsbuildinfo`, `docs/` from root.
+- **Secrets**: never commit `.env` or real API keys/passwords. `.gitignore` blocks `.env*`, `.venv`, `node_modules`, `.next`, `*.tsbuildinfo`, `docs/` from root.
 - **Chinese surface**: UI strings, prompts, and field/table descriptions are Chinese. Preserve when editing prompts in `backend/app/agent/prompts/*.md`.
 
 ## API contract

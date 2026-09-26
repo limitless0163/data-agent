@@ -1,9 +1,9 @@
-from dataclasses import dataclass
 import os
+from dataclasses import dataclass
 from pathlib import Path
 
+from dotenv import load_dotenv
 from omegaconf import OmegaConf
-
 
 
 # 日志配置
@@ -77,25 +77,44 @@ class AppConfig:
     llm: LLMConfig
 
 
-config_file = Path(__file__).with_name('app_config.yaml')
-context = OmegaConf.load(config_file)
-schema = OmegaConf.structured(AppConfig)
-app_config: AppConfig = OmegaConf.to_object(OmegaConf.merge(schema, context))
+def _load_app_config() -> AppConfig:
+    project_root = Path(__file__).resolve().parents[4]
+    load_dotenv(project_root / ".env", override=False)
 
-# Allow container deployments to use Compose DNS names and runtime secrets while
-# keeping the checked-in YAML usable for local development.
-app_config.db_meta.host = os.getenv("DATA_AGENT_DB_META_HOST", app_config.db_meta.host)
-app_config.db_meta.port = int(os.getenv("DATA_AGENT_DB_META_PORT", app_config.db_meta.port))
-app_config.db_dw.host = os.getenv("DATA_AGENT_DB_DW_HOST", app_config.db_dw.host)
-app_config.db_dw.port = int(os.getenv("DATA_AGENT_DB_DW_PORT", app_config.db_dw.port))
-app_config.db_meta.user = os.getenv("DATA_AGENT_DB_USER", app_config.db_meta.user)
-app_config.db_dw.user = os.getenv("DATA_AGENT_DB_USER", app_config.db_dw.user)
-app_config.db_meta.password = os.getenv("DATA_AGENT_DB_PASSWORD", app_config.db_meta.password)
-app_config.db_dw.password = os.getenv("DATA_AGENT_DB_PASSWORD", app_config.db_dw.password)
-app_config.qdrant.host = os.getenv("DATA_AGENT_QDRANT_HOST", app_config.qdrant.host)
-app_config.qdrant.port = int(os.getenv("DATA_AGENT_QDRANT_PORT", app_config.qdrant.port))
-app_config.embedding.host = os.getenv("DATA_AGENT_EMBEDDING_HOST", app_config.embedding.host)
-app_config.embedding.port = int(os.getenv("DATA_AGENT_EMBEDDING_PORT", app_config.embedding.port))
-app_config.es.host = os.getenv("DATA_AGENT_ES_HOST", app_config.es.host)
-app_config.es.port = int(os.getenv("DATA_AGENT_ES_PORT", app_config.es.port))
-app_config.llm.api_key = os.getenv("DATA_AGENT_LLM_API_KEY", os.getenv("DEEPSEEK_API_KEY", app_config.llm.api_key))
+    config_file = Path(__file__).with_name('app_config.yaml')
+    context = OmegaConf.load(config_file)
+
+    # 容器部署时通过环境变量配置 Compose 服务名和运行时密钥；本地开发仍可使用仓库中的 YAML 默认配置。
+    env_overrides = {
+        "db_meta.host": ("DATA_AGENT_DB_META_HOST", str),
+        "db_meta.port": ("DATA_AGENT_DB_META_PORT", int),
+        "db_dw.host": ("DATA_AGENT_DB_DW_HOST", str),
+        "db_dw.port": ("DATA_AGENT_DB_DW_PORT", int),
+        "db_meta.user": ("DATA_AGENT_DB_USER", str),
+        "db_dw.user": ("DATA_AGENT_DB_USER", str),
+        "db_meta.password": ("DATA_AGENT_DB_PASSWORD", str),
+        "db_dw.password": ("DATA_AGENT_DB_PASSWORD", str),
+        "qdrant.host": ("DATA_AGENT_QDRANT_HOST", str),
+        "qdrant.port": ("DATA_AGENT_QDRANT_PORT", int),
+        "embedding.host": ("DATA_AGENT_EMBEDDING_HOST", str),
+        "embedding.port": ("DATA_AGENT_EMBEDDING_PORT", int),
+        "es.host": ("DATA_AGENT_ES_HOST", str),
+        "es.port": ("DATA_AGENT_ES_PORT", int),
+    }
+
+    for path, (env_name, convert) in env_overrides.items():
+        value = os.getenv(env_name)
+        if value is not None:
+            OmegaConf.update(context, path, convert(value))
+
+    api_key = os.getenv("DATA_AGENT_LLM_API_KEY")
+    if api_key is None:
+        api_key = os.getenv("DEEPSEEK_API_KEY")
+    if api_key is not None:
+        OmegaConf.update(context, "llm.api_key", api_key)
+
+    schema = OmegaConf.structured(AppConfig)
+    return OmegaConf.to_object(OmegaConf.merge(schema, context))
+
+
+app_config: AppConfig = _load_app_config()

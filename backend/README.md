@@ -40,13 +40,9 @@ uv sync
 
 ### `app_config.yaml`（运行时配置）
 
-仓库内的模板是 `app/core/config/app_config.example.yaml`（提交到 git、Compose 内只读挂载）。本地原生开发时复制一份：
+`app/core/config/app_config.yaml` 是仓库跟踪的基础配置，Compose 与本地原生开发共用。不要在其中填写真实 API key 或密码；通过 `.env` 或环境变量提供秘密，并按需覆盖主机名和端口。
 
-```bash
-cp app/core/config/app_config.example.yaml app/core/config/app_config.yaml
-```
-
-按本地环境修改 host / port / 密码。`app_config.yaml` 同时被 `.gitignore` 和 `backend/.dockerignore` 忽略，不会被提交或进入镜像。
+配置加载时会读取项目根目录的 `.env`。Compose 或 shell 已注入的环境变量优先于 `.env` 中的值。
 
 ### `meta_config.yaml`（元知识源）
 
@@ -249,7 +245,7 @@ async def query(self, query: str):
 - `app/` 内的注释与 docstring 为中文；编辑 `app/agent/prompts/*.md` 时保持中文措辞。
 - 4 空格缩进，类型用 `TypedDict` / dataclass；项目未启用 `from __future__ import annotations`，保持 Python 3.11 习惯写法。
 - **不要**在 `app/` 内放 `__init__.py`。
-- **不要**提交 `app_config.yaml`、`__pycache__`、`.venv`、`*.log`。
+- **不要**提交 `.env`、真实 API key 或密码；`app_config.yaml` 只保留可共享的基础配置。
 - 新增节点请沿用现有模式：`runtime.stream_writer` 推送 progress → `try / except` → `logger.info` 成功日志 → 失败时 `raise`。
 - 编辑完成后用 `make smoke` 跑一次端到端验证。
 

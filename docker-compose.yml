@@ -64,7 +64,6 @@ services:
       DATA_AGENT_ES_HOST: elasticsearch
       DATA_AGENT_ES_PORT: "9200"
     volumes:
-      - ./backend/app/core/config/app_config.example.yaml:/app/app/core/config/app_config.yaml:ro
       - knowledge_state:/state
     depends_on:
       - mysql
@@ -82,8 +81,6 @@ services:
       dockerfile: Dockerfile
     restart: unless-stopped
     environment: *backend-environment
-    volumes:
-      - ./backend/app/core/config/app_config.example.yaml:/app/app/core/config/app_config.yaml:ro
     expose:
       - "8000"
     depends_on:
