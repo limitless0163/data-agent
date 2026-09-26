@@ -1,10 +1,11 @@
 import unittest
 
-from app.agent.graph import graph
+from app.agent.graph import build_graph
 
 
 class AgentGraphTests(unittest.TestCase):
     def test_compiled_graph_contains_all_agent_nodes(self):
+        graph = build_graph()
         node_names = set(graph.get_graph().nodes)
 
         self.assertTrue(
