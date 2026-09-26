@@ -27,7 +27,9 @@ from app.repositories.mysql.meta.meta_mysql_repository import MetaMySQLRepositor
 from app.repositories.qdrant.column_qdrant_repository import ColumnQdrantRepository
 from app.repositories.qdrant.metric_qdrant_repository import MetricQdrantRepository
 
+
 graph_builder = StateGraph(state_schema=DataAgentState, context_schema=DataAgentContext)
+
 
 # 添加节点
 graph_builder.add_node("extract_keywords", extract_keywords)
@@ -42,6 +44,7 @@ graph_builder.add_node("generate_sql", generate_sql)
 graph_builder.add_node("validate_sql", validate_sql)
 graph_builder.add_node("correct_sql", correct_sql)
 graph_builder.add_node("execute_sql", execute_sql)
+
 
 # 添加关系
 graph_builder.add_edge(START, "extract_keywords")
@@ -66,7 +69,6 @@ graph_builder.add_edge("correct_sql", "execute_sql")
 graph_builder.add_edge("execute_sql", END)
 
 graph = graph_builder.compile()
-
 
 
 if __name__ == '__main__':

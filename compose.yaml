@@ -1,11 +1,96 @@
 services:
+  mysql:
+    image: mysql:8.4
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-local-root-password}
+      MYSQL_DATABASE: meta
+      MYSQL_USER: atguigu
+      MYSQL_PASSWORD: ${DATA_AGENT_DB_PASSWORD:-Atguigu.123}
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./data-agent/docker/mysql/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.19.3
+    restart: unless-stopped
+    environment:
+      discovery.type: single-node
+      xpack.security.enabled: "false"
+      ES_JAVA_OPTS: "-Xms512m -Xmx512m"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    expose:
+      - "9200"
+
+  qdrant:
+    image: qdrant/qdrant:v1.16.2
+    restart: unless-stopped
+    volumes:
+      - qdrant_data:/qdrant/storage
+    expose:
+      - "6333"
+
+  embeddings:
+    image: ghcr.io/huggingface/text-embeddings-inference:cpu-arm64-1.9
+    restart: unless-stopped
+    command: ["--model-id", "BAAI/bge-large-zh-v1.5", "--port", "80"]
+    volumes:
+      - embedding_model_cache:/data
+    expose:
+      - "80"
+
+  knowledge-init:
+    build:
+      context: ./data-agent
+      dockerfile: Dockerfile
+    restart: "no"
+    environment: &backend-environment
+      DATA_AGENT_DB_META_HOST: mysql
+      DATA_AGENT_DB_DW_HOST: mysql
+      DATA_AGENT_DB_USER: atguigu
+      DATA_AGENT_DB_PASSWORD: ${DATA_AGENT_DB_PASSWORD:-Atguigu.123}
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:?Set DEEPSEEK_API_KEY in the project .env file}
+      DATA_AGENT_QDRANT_HOST: qdrant
+      DATA_AGENT_QDRANT_PORT: "6333"
+      DATA_AGENT_EMBEDDING_HOST: embeddings
+      DATA_AGENT_EMBEDDING_PORT: "80"
+      DATA_AGENT_ES_HOST: elasticsearch
+      DATA_AGENT_ES_PORT: "9200"
+    volumes:
+      - ./data-agent/conf/app_config.yaml:/app/conf/app_config.yaml:ro
+      - knowledge_state:/state
+    depends_on:
+      - mysql
+      - elasticsearch
+      - qdrant
+      - embeddings
+    command:
+      - sh
+      - -c
+      - 'if [ -f /state/ready ]; then echo "Metadata knowledge is already initialized."; else uv run --no-sync python app/scripts/wait_and_build_meta.py && touch /state/ready; fi'
+
   backend:
     build:
       context: ./data-agent
       dockerfile: Dockerfile
     restart: unless-stopped
+    environment: *backend-environment
+    volumes:
+      - ./data-agent/conf/app_config.yaml:/app/conf/app_config.yaml:ro
     expose:
       - "8000"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      knowledge-init:
+        condition: service_completed_successfully
 
   frontend:
     build:
@@ -16,3 +101,10 @@ services:
       - backend
     ports:
       - "8080:80"
+
+volumes:
+  mysql_data:
+  elasticsearch_data:
+  qdrant_data:
+  embedding_model_cache:
+  knowledge_state:

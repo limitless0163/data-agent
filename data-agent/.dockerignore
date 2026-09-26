@@ -4,3 +4,4 @@ __pycache__
 *.log
 logs
 .DS_Store
+conf/app_config.yaml

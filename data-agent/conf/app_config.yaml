@@ -33,14 +33,12 @@ embedding:
   port: 8081
   model: BAAI/bge-large-zh-v1.5
 
-
 es:
   host: localhost
   port: 9200
   index_name: data_agent
 
-
 llm:
   model_name: deepseek-flash
   api_key: ${oc.env:DEEPSEEK_API_KEY}
-  base_url: https://api.deepseek.com/anthropic
+  base_url: https://api.deepseek.com

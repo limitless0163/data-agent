@@ -11,7 +11,7 @@ class ValueESRepository:
         "dynamic": False,
         "properties": {
             "id": {"type": "keyword"},
-            "value": {"type": "text", "analyzer": "ik_max_word", "search_analyzer": "ik_max_word"},
+            "value": {"type": "text", "analyzer": "standard", "search_analyzer": "standard"},
             "column_id": {"type": "keyword"}
         }
     }

@@ -1,4 +1,5 @@
 import uuid
+from decimal import Decimal
 from pathlib import Path
 
 from langchain_huggingface import HuggingFaceEndpointEmbeddings
@@ -54,6 +55,12 @@ class MetaKnowledgeService:
             for column in table.columns:
                 # 查询该字段的部分取值作为示例
                 column_values: list = await self.dw_mysql_repository.get_column_values(table.name, column.name, 10)
+                # MySQL DECIMAL values are returned as Decimal, which is not
+                # directly JSON serializable in the metadata examples column.
+                column_values = [
+                    float(value) if isinstance(value, Decimal) else value
+                    for value in column_values
+                ]
                 # 构造ColumnInfo实例
                 column_info = ColumnInfo(
                     id=f"{table.name}.{column.name}",

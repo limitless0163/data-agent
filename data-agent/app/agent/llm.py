@@ -1,12 +1,15 @@
-from langchain.chat_models import init_chat_model
+from langchain_openai import ChatOpenAI
 
 from app.conf.app_config import app_config
 
-llm = init_chat_model(model=app_config.llm.model_name,
-                      model_provider="openai",
-                      api_key=app_config.llm.api_key,
-                      base_url=app_config.llm.base_url,
-                      temperature=0)
+
+llm = ChatOpenAI(
+    model=app_config.llm.model_name,
+    api_key=app_config.llm.api_key,
+    base_url=app_config.llm.base_url,
+    temperature=0,
+    extra_body={"thinking": {"type": "disabled"}},
+)
 
 
 if __name__ == '__main__':
