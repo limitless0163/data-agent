@@ -112,6 +112,3 @@ temp/
 *.rej
 data/
 uploads/
-
-# ===== 项目文档 =====
-docs/
