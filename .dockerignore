@@ -1,0 +1,10 @@
+.git
+.env
+.DS_Store
+backend
+docs
+scripts
+**/.venv
+**/node_modules
+**/dist
+infra/docker/mysql
