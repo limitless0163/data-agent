@@ -54,6 +54,7 @@ services:
       dockerfile: Dockerfile
     restart: "no"
     environment: &backend-environment
+      TZ: Asia/Shanghai
       DATA_AGENT_DB_META_HOST: mysql
       DATA_AGENT_DB_DW_HOST: mysql
       DATA_AGENT_DB_USER: atguigu

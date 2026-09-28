@@ -4,7 +4,8 @@ COPY --from=ghcr.io/astral-sh/uv:0.12.17 /uv /uvx /bin/
 
 ENV UV_COMPILE_BYTECODE=1 \
     UV_LINK_MODE=copy \
-    PYTHONUNBUFFERED=1
+    PYTHONUNBUFFERED=1 \
+    TZ=Asia/Shanghai
 
 WORKDIR /app
 

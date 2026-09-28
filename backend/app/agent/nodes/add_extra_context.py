@@ -1,4 +1,5 @@
 from datetime import UTC, datetime
+from zoneinfo import ZoneInfo
 
 from langgraph.runtime import Runtime
 
@@ -14,14 +15,14 @@ async def add_extra_context(state: DataAgentState, runtime: Runtime[DataAgentCon
     dw_mysql_repository = runtime.context["dw_mysql_repository"]
 
     try:
-        today = datetime.now(tz=UTC).astimezone()  # 当前的时间信息
-        date = today.strftime("%Y-%m-%d")  # 日期
-        weekday = today.strftime("%A")  # 星期
-        quarter = f"Q{(today.month - 1) // 3 + 1}"  # 季度
+        # 固定以北京时间解释相对日期，避免部署环境的时区改变查询含义。
+        today = datetime.now(tz=UTC).astimezone(ZoneInfo("Asia/Shanghai"))
+        date = today.strftime("%Y-%m-%d")
+        weekday = today.strftime("%A")
+        quarter = f"Q{(today.month - 1) // 3 + 1}"
 
         date_info = DateInfoState(date=date, weekday=weekday, quarter=quarter)
 
-        # 数据仓库环境信息
         db_info = await dw_mysql_repository.get_db_info()
 
         writer({"type": "progress", "step": "添加额外上下文信息", "status": "success"})
