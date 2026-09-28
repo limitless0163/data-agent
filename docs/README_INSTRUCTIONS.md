@@ -40,27 +40,61 @@ Keep it polished, visually clean, concise, and suitable for a public open-source
 
 Use a centered header.
 
-Include:
+The header must appear in this order:
 
-- Project name
-- One short tagline
-- Language switch
-- Optional meaningful badges if supported by the repository
+1. Project name.
+2. One short tagline.
+3. Language switch.
+4. One centered badge row containing the core technology badges, followed by the license badge.
 
-Example structure:
+#### Language Switch
+
+Only the **other language** should be clickable. The current language must be plain text, not a link.
+
+For `README.md`:
 
 ```html
-<h1 align="center">Project Name</h1>
-
 <p align="center">
-  Short project description.
-</p>
-
-<p align="center">
-  <a href="./README.md">English</a> |
+  English |
   <a href="./README_zh.md">简体中文</a>
 </p>
 ```
+
+For `README_zh.md`:
+
+```html
+<p align="center">
+  <a href="./README.md">English</a> |
+  简体中文
+</p>
+```
+
+Do not link the current README to itself.
+
+#### Header Badges
+
+Place the badge row **immediately below the language switch** and center it.
+
+Show only a small set of important technologies that represent the project well, followed by the license badge. Do not duplicate these badges later in the README.
+
+Example:
+
+```html
+<p align="center">
+  <img src="..." alt="Python">
+  <img src="..." alt="FastAPI">
+  <img src="..." alt="Next.js">
+  <img src="..." alt="React">
+  <img src="..." alt="LangGraph">
+  <a href="./LICENSE">
+    <img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="MIT License">
+  </a>
+</p>
+```
+
+Use stable GitHub-compatible badge sources such as Shields.io and Simple Icons.
+
+The license badge must reflect the repository's actual license. For an MIT-licensed repository, use an MIT badge and link it to `LICENSE`. Never invent a license that is not present in the repository.
 
 `README.md` must be the default English version.
 
@@ -111,19 +145,9 @@ Do not describe implementation details here unless necessary to understand the f
 
 Show only technologies actually used by the project.
 
-Prefer a compact, visually clean presentation using recognizable technology badges/icons where appropriate.
+The main technology badges belong in the centered header badge row directly below the language switch. Do not repeat the same badges in this section.
 
-For example:
-
-```html
-<p>
-  <img src="..." alt="Python">
-  <img src="..." alt="FastAPI">
-  <img src="..." alt="Next.js">
-</p>
-```
-
-Use stable GitHub-compatible badge/icon sources such as Shields.io or Simple Icons.
+Use this section for a compact table or short grouped list that gives slightly more detail about the stack.
 
 Do not add technologies merely because they are common for this type of project.
 
@@ -201,6 +225,22 @@ At minimum, when present:
 - `AGENTS.md`
 - testing or architecture documentation
 
+### License
+
+If the repository has a license, end the root README with a short `License` section.
+
+For an MIT-licensed repository, prefer:
+
+```markdown
+## License
+
+This project is licensed under the [MIT License](LICENSE).
+```
+
+Use the corresponding translated sentence in `README_zh.md`.
+
+Keep the section short. Do not reproduce the full license text in the README.
+
 ### Content to Avoid in Root README
 
 Unless essential to first-time setup, do not place detailed material such as:
@@ -273,7 +313,11 @@ Before finishing:
 - Verify all commands, paths, versions, ports, environment variables, and technical claims.
 - Ensure `README.md` and `README_zh.md` have equivalent content and structure.
 - Ensure `README.md` is English and is the default GitHub README.
-- Ensure the project title and language switch are centered.
+- Ensure the project title, tagline, language switch, and header badge row are centered.
+- Ensure only the alternate language is clickable; the current language must not link to itself.
+- Ensure the core technology badges appear directly below the language switch and are not duplicated in the Tech Stack section.
+- Ensure the license badge matches the actual repository license and links to `LICENSE` when present.
+- Ensure an MIT-licensed repository ends with a concise MIT License section.
 - Ensure the root README is visually clean and concise.
 - Ensure the technology stack is easy to recognize visually.
 - Ensure detailed implementation information is delegated to module or dedicated documentation.
