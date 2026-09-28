@@ -1,6 +1,4 @@
-<h1 align="center">掌柜问数 · data-agent</h1>
-
-<p align="center">用中文提问，从数据仓库获取答案。</p>
+<h1 align="center">掌柜问数</h1>
 
 <p align="center">
   <a href="./README.md">English</a> |

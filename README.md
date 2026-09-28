@@ -1,6 +1,4 @@
-<h1 align="center">掌柜问数 · data-agent</h1>
-
-<p align="center">Ask questions in Chinese. Get answers from your data warehouse.</p>
+<h1 align="center">Data Agent</h1>
 
 <p align="center">
   English |
