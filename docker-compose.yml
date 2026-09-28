@@ -16,6 +16,8 @@ services:
       timeout: 5s
       retries: 30
       start_period: 30s
+    ports:
+      - "3307:3306"
 
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.19.3
