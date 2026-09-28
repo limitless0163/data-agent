@@ -113,3 +113,7 @@ uploads/
 
 # ===== 文档 =====
 docs/掌柜问数.docx
+# Automated test artifacts
+coverage.xml
+playwright-report/
+test-results/

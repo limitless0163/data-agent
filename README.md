@@ -52,6 +52,8 @@ Browser (8080)
 ├── infra/
 │   └── docker/mysql/init.sql        DW 种子数据 + meta 库 DDL，首次启动 MySQL 时执行
 ├── docs/           项目规范（ARCHITECTURE_INSTRUCTIONS、COMMIT_INSTRUCTIONS 等）
+├── tests/e2e/      浏览器与跨服务测试
+├── .github/workflows/tests.yml    自动测试 CI
 ├── scripts/
 │   └── smoke.sh    HTTP 探活脚本（make smoke）
 ├── docker-compose.yml
@@ -61,7 +63,7 @@ Browser (8080)
 └── README.md
 ```
 
-`tests/`、`components/`、`hooks/`、`stores/`、`utils/`、`migrations/` 等顶层目录按 `docs/ARCHITECTURE_INSTRUCTIONS.md` 约定：**仅在出现真实业务内容时创建**，目前不存在。
+`tests/e2e/` 保存系统级跨端测试；模块单元/集成测试分别在 `backend/tests/`、`frontend/tests/`。其余目录仅在出现真实职责时创建。
 
 ## 前置条件
 
@@ -113,6 +115,20 @@ make prod
 make smoke     # 检查前端 /、后端 /openapi.json、POST /api/query 校验（详见 scripts/smoke.sh）
 make typecheck # exec 进前端容器跑 tsc --noEmit
 ```
+
+## 自动化测试
+
+首次安装：`make test-install`。本地测试需要 Python 3.11.2、uv、Node 22.22.2+（22.x）、npm 和 make，无需 Docker、`.env` 或真实外部服务。
+
+```sh
+make test             # 后端 + 前端类型检查/测试 + 跨端 E2E
+make test-backend     # pytest、TestClient API、Agent、Repository、内存数据库集成
+make test-frontend    # Vitest / Testing Library + tsc
+make test-e2e         # Chromium → Next.js → FastAPI → Agent → 内存 SQL
+make test-coverage    # 同一套测试 + 前后端覆盖率报告及门禁
+```
+
+CI 在每次 push/PR 执行完整测试、覆盖率门禁与前端生产构建。测试隔离、指定文件运行、报告位置与尚未覆盖的风险详见 [docs/TESTING.md](docs/TESTING.md)。
 
 ## 配置
 

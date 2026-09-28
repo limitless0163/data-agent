@@ -37,7 +37,7 @@ scripts/   Cross-service tooling. Currently `smoke.sh` for HTTP probes.
 docker-compose.yml, Makefile, .env.example, README.md
 ```
 
-There is intentionally no `tests/`, `components/`, `hooks/`, `middleware/`, `migrations/`, `stores/`, or `utils/` directory yet — they are created only when real content requires them (per `docs/ARCHITECTURE_INSTRUCTIONS.md`).
+System/browser tests live in `tests/e2e/`; module tests live in `backend/tests/` and `frontend/tests/`. There is intentionally no `components/`, `hooks/`, `middleware/`, `migrations/`, `stores/`, or `utils/` directory yet — they are created only when real content requires them (per `docs/ARCHITECTURE_INSTRUCTIONS.md`).
 
 ## Prerequisites
 
@@ -62,6 +62,10 @@ The root `Makefile` wraps Docker Compose; module directories expose Python/npm t
 | HTTP smoke test (frontend + backend `/api/query`) | `make smoke` (`./scripts/smoke.sh`) |
 | Frontend typecheck            | `make typecheck`                             |
 | Build prod images             | `make build`                                 |
+| Install native test dependencies | `make test-install` |
+| Run all automated tests | `make test` |
+| Test one layer | `make test-backend` / `make test-frontend` / `make test-e2e` |
+| All tests with coverage gates | `make test-coverage` |
 
 For native iteration, see `backend/AGENTS.md` (uvicorn, `uv sync`) and `frontend/AGENTS.md` (`npm run dev/build/typecheck`).
 
@@ -104,6 +108,10 @@ For native iteration, see `backend/AGENTS.md` (uvicorn, `uv sync`) and `frontend
 3. Use `make smoke` to verify the HTTP path before opening the UI.
 4. `make typecheck` validates frontend TypeScript against `.next/dev/types` and `.next/types` — those are generated; `tsconfig.tsbuildinfo` is git-ignored.
 5. Add new schema/metrics by editing `meta_config.yaml` and re-running `knowledge-init` (delete the `knowledge_state` volume, or `make down && make dev`).
+
+## Automated testing
+
+Native tests require Python 3.11.2, uv, Node 22.22.2+ (22.x), npm and make. They do not use Compose, real credentials or external services. Use `make test-install` then `make test`; CI runs `make test-coverage` and the production frontend build on push/PR. Details, isolation requirements and uncovered risks: [docs/TESTING.md](docs/TESTING.md).
 
 ## Module guides
 

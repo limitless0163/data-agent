@@ -14,3 +14,10 @@ logs
 *.key
 secrets/
 **/secrets/
+
+tests
+.coverage*
+coverage.xml
+htmlcov
+
+.pytest_cache

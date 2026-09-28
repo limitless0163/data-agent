@@ -19,8 +19,37 @@ dependencies = [
     "python-dotenv>=1.0.0",
     "pyyaml>=6.0.3",
     "qdrant-client>=1.16.2",
-    "sqlalchemy>=2.0.46",
+    "sqlalchemy[asyncio]>=2.0.46",
 ]
 
 [tool.ruff.lint.isort]
 known-first-party = ["app"]
+
+[dependency-groups]
+dev = [
+    "aiosqlite>=0.22.1",
+    "pytest>=9.1.1",
+    "pytest-asyncio>=1.4.0",
+    "pytest-cov>=7.1.0",
+    "pytest-mock>=3.16.0",
+    "pytest-randomly>=5.0.0",
+]
+
+[tool.coverage.run]
+source = ["app"]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
+fail_under = 80
+
+[tool.coverage.html]
+directory = "htmlcov"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = [".", "tests"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+asyncio_default_test_loop_scope = "function"
+addopts = "-ra --strict-config --strict-markers"

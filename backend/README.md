@@ -235,12 +235,19 @@ async def query(self, query: str):
 
 ## 测试与验证
 
-项目没有单元测试套件（按 `docs/ARCHITECTURE_INSTRUCTIONS.md`，仅在有真实业务内容时创建 `tests/`）。通过以下方式验证：
+使用 `pytest` + FastAPI `TestClient`，异步用例由 `pytest-asyncio` 执行，Mock 由 `pytest-mock` fixture 管理，覆盖 API/SSE、Service、真实 Agent 图与节点、依赖注入、Repository、内存 SQLite 事务、Qdrant 内存往返和元知识构建。LLM/ES/embedding 不联网，测试不读取本地 `.env`。
 
-- `make smoke`（`scripts/smoke.sh`）—— 检查前端 `/`、后端 `/openapi.json` 含 `/api/query`、`POST /api/query {}` 返回 `422`（Pydantic 校验失败）。
-- `make logs SERVICE=backend` —— 查看节点级 progress 事件、生成的 SQL、执行结果。
-- `make logs SERVICE=knowledge-init` —— 确认元知识库首次构建成功；之后会有 `Metadata knowledge is already initialized.` 跳过日志。
-- 手动：`curl -N -H 'Content-Type: application/json' -d '{"query":"..."}' http://localhost:8000/api/query`。
+```sh
+uv sync --frozen
+uv run --frozen pytest                                # 全部后端测试
+uv run --frozen pytest tests/test_database.py           # 指定文件
+uv run --frozen pytest -k cancellation                  # 指定场景
+uv run --frozen pytest --randomly-seed=2026              # 可重复的随机顺序
+uv run --frozen pytest --cov=app --cov-report=html --cov-report=xml
+# htmlcov/index.html / coverage.xml
+```
+
+从根目录运行 `make test` 执行全部前后端/跨端测试，`make test-coverage` 生成覆盖率并执行门禁。`tests/conftest.py` 在收集前屏蔽真实环境配置，并通过 fixture 隔离网络、日志、缓存和应用依赖；API fixture 使用 TestClient 上下文运行生产 lifespan（外部客户端替换为 Mock），结束后校验清理。MySQL 专有行为与真实召回/LLM 质量等限制见 [../docs/TESTING.md](../docs/TESTING.md)。部署 HTTP 探活仍可使用 `make smoke`。
 
 ## 代码风格
 

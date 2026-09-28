@@ -18,7 +18,7 @@ export default function ChatPage() {
   }, [messages]);
 
   async function sendQuestion() {
-    if (!question || busy.current) return;
+    if (!question.trim() || busy.current) return;
 
     const query = question;
     const userId = ++nextId.current;
@@ -109,7 +109,7 @@ export default function ChatPage() {
       <div className="input-wrapper">
         <div className="input-box">
           <input value={question} onChange={(event) => setQuestion(event.target.value)}
-            onKeyDown={(event) => { if (event.key === "Enter") void sendQuestion(); }}
+            onKeyDown={(event) => { if (event.key === "Enter" && !event.nativeEvent.isComposing && event.keyCode !== 229) void sendQuestion(); }}
             placeholder="请输入你的问题..." aria-label="请输入你的问题" />
           <button onClick={() => void sendQuestion()} disabled={loading}>{loading ? "执行中..." : "发送"}</button>
         </div>

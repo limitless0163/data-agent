@@ -1,6 +1,6 @@
 # ARCHITECTURE_INSTRUCTIONS.md
 
-## 总项目文件夹参考架构
+## 总项目参考架构
 ```
 project/
 ├── backend/                # 后端
@@ -21,7 +21,7 @@ project/
 ```
 
 
-## 前端文件夹参考架构    TypeScript + React + Next.js
+## 前端参考架构    TypeScript + React + Next.js
 ```
 frontend/
 ├── public/                 # 图片、字体、图标等静态资源
@@ -48,7 +48,7 @@ frontend/
 ```
 
 
-## 后端文件夹参考架构      Python + FastAPI
+## 后端参考架构      Python + FastAPI
 ```
 backend/
 ├── app/                    # 后端核心源码
@@ -75,6 +75,25 @@ backend/
 ├── AGENTS.md
 ├── CLAUDE.md
 └── README.md
+```
+
+
+## 测试参考架构
+```
+Frontend
+├── Vitest
+└── React Testing Library
+
+Backend
+├── pytest
+├── FastAPI TestClient
+└── HTTPX
+
+Full-stack E2E
+└── Playwright
+
+CI
+└── GitHub Actions
 ```
 
 

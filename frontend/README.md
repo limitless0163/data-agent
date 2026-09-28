@@ -14,7 +14,7 @@ TypeScript + React 19 + Next.js 16（App Router）实现的单页聊天界面。
 
 ## 先决条件
 
-- Node 22（`Dockerfile` 基镜像：`node:22-alpine`）
+- Node 22（测试需要 22.22.2+；`Dockerfile` 基镜像：`node:22-alpine`）
 - npm（仓库提交了 `package-lock.json`，使用 `npm ci`）
 - 后端 API 在本地 `http://localhost:8000` 运行，或通过 `API_BASE_URL` 指向远程后端
 
@@ -44,6 +44,21 @@ npm ci
 | `make typecheck` | `exec` 进 `frontend-dev` 容器执行 `npm run typecheck` |
 | `make logs SERVICE=frontend-dev` | 查看开发前端日志 |
 | `make smoke` | HTTP 探活（`/`、`/api/query` 校验） |
+
+## 自动化测试
+
+```sh
+npm test                               # Vitest：聊天组件、SSE、API 代理
+npm test -- tests/query.test.ts         # 指定文件
+npm run test:watch                      # 监听模式
+npm run test:coverage                   # coverage/index.html / lcov.info
+npm run test:e2e:install                # 首次下载 Chromium
+npm run test:e2e                        # 跨端 Playwright（也需后端 uv 依赖）
+```
+
+组件测试使用 Testing Library + jsdom；SSE/代理测试使用 Node 的 Web Streams。测试自动恢复 Mock、环境变量及 DOM。跨端测试自动管理 3100/8100 上的独立服务，覆盖浏览器到真实后端 Agent 的链路，外部模型/检索服务使用确定性替身。
+
+根目录 `make test-install` 完成安装，`make test` 一键运行全部测试，`make test-coverage` 执行覆盖率门禁。配置在 `vitest.config.mts`、`playwright.config.ts`；用例在 `tests/` 及根 `tests/e2e/`。详细隔离/CI/风险见 [../docs/TESTING.md](../docs/TESTING.md)。
 
 ## 路由
 

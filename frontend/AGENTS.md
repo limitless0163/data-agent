@@ -82,11 +82,14 @@ tsconfig.json                     # strict, noEmit, jsx: "react-jsx"
 
 ## Tests / verification
 
-There is no test suite. Use:
+Use Vitest + Testing Library for the chat state/form and SSE service/Next proxy:
 
-- `npm run typecheck` for type safety.
-- `make smoke` from repo root for the end-to-end HTTP probe (frontend root, backend `/openapi.json`, and a malformed `POST /api/query` returning `422`).
-- Manual: open http://localhost:8080 and send a question; the agent step dots should progress through running → success/error, then a result table renders.
+- `npm test`; `npm run test:coverage`; `npm run test:watch`.
+- `npm run typecheck` for type safety; test tools require Node 22.22.2+ (22.x).
+- `npm run test:e2e:install` then `npm run test:e2e` for the root `tests/e2e/` suite (backend uv deps must be installed).
+- `make test` / `make test-coverage` from root run all layers; see [../docs/TESTING.md](../docs/TESTING.md).
+
+`vitest.config.mts` defaults to Node; component tests explicitly use jsdom. Restore fetch/global/env mocks and unmount DOM after tests. Playwright owns separate servers on 3100/8100 and must not reuse running development/production services. Do not run E2E concurrently with another process writing `frontend/.next`.
 
 ## Code style
 
@@ -100,3 +103,13 @@ There is no test suite. Use:
 1. `npm ci`.
 2. Have the backend running (default `localhost:8000`) or set `API_BASE_URL` for a remote host.
 3. `npm run dev` → http://localhost:3000 (frontend dev port). Note that `next.config.ts` does not rewrite `/api/query`; the route is served by Next.js itself.
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->

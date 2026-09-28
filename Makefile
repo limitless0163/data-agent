@@ -6,7 +6,7 @@ PROD_COMPOSE := $(COMPOSE) --profile prod
 ALL_COMPOSE := $(COMPOSE) --profile dev --profile prod
 SERVICE ?=
 
-.PHONY: help docker-ready dev up prod stop down restart ps logs smoke typecheck build
+.PHONY: help docker-ready dev up prod stop down restart ps logs smoke typecheck build test-install test test-backend test-frontend test-e2e test-coverage
 
 help:
 	@printf '%s\n' \
@@ -20,7 +20,11 @@ help:
 		'make logs       跟踪开发环境日志；可指定 SERVICE=frontend-dev 等服务名' \
 		'make smoke      检查前后端 HTTP 接口' \
 		'make typecheck  检查前端 TypeScript 类型（需先 make dev）' \
-		'make build      构建生产镜像'
+		'make build      构建生产镜像' \
+		'make test-install  安装锁定的测试依赖及 Chromium' \
+		'make test       前端类型检查、单元/集成测试、跨端 E2E' \
+		'make test-backend / test-frontend / test-e2e  分别测试' \
+		'make test-coverage  全部测试及前后端覆盖率'
 
 dev: docker-ready
 	$(PROD_COMPOSE) stop frontend
@@ -84,3 +88,30 @@ typecheck:
 
 build:
 	$(PROD_COMPOSE) build
+
+# Native hermetic tests: no Compose, .env or production services required.
+test-install:
+	cd backend && uv sync --frozen
+	cd frontend && npm ci
+	cd frontend && npm run test:e2e:install
+
+test:
+	$(MAKE) test-backend
+	$(MAKE) test-frontend
+	$(MAKE) test-e2e
+
+test-backend:
+	cd backend && uv run --frozen pytest
+
+test-frontend:
+	cd frontend && npm run typecheck
+	cd frontend && npm test
+
+test-e2e:
+	cd frontend && npm run test:e2e
+
+test-coverage:
+	cd backend && uv run --frozen pytest --cov=app --cov-report=term-missing --cov-report=html --cov-report=xml
+	cd frontend && npm run typecheck
+	cd frontend && npm run test:coverage
+	$(MAKE) test-e2e

@@ -134,11 +134,12 @@ Each node writes progress events via `runtime.stream_writer({"type": "progress",
 
 ## Tests / verification
 
-Backend unit tests live in `tests/` and use the standard-library `unittest` runner:
+Backend unit tests live in `tests/` and use pytest + FastAPI TestClient:
 
-- `uv run python -m unittest discover -s tests`
+- `uv run --frozen pytest` (file/node selection and `-k` supported)
+- `make test-backend` / `make test-coverage` from root; see [../docs/TESTING.md](../docs/TESTING.md).
 
-The suite should not require running Compose services. End-to-end verification is done through Compose:
+The suite uses pytest-asyncio, pytest-mock and pytest-cov, in-memory SQLite/Qdrant, patched LLM/ES/embedding clients and a socket guard. `tests/conftest.py` configures isolation before collection, suppresses `.env`/file logs and cleans temporary jieba caches. Use pytest assertions/raises and fixture teardown; do not introduce TestCase classes or custom runners. API tests use `with TestClient(app)` and mock external-client managers while executing the real lifespan. Cross-service browser tests use Playwright via `make test-e2e`; keep test overrides in `tests/e2e/backend_app.py`, never add production test switches. Deployments can additionally be probed through Compose:
 
 - `make smoke` (runs `scripts/smoke.sh`) — checks frontend root (`/` → 200), `backend /openapi.json` advertises `/api/query`, and `POST /api/query {}` returns `422` (Pydantic validation, not 500).
 - `make logs SERVICE=backend` — inspect agent progress events and SQL generation.

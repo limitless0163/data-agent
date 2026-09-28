@@ -10,3 +10,13 @@ scripts
 **/.next
 **/*.tsbuildinfo
 infra/docker/mysql
+
+.github
+tests
+**/tests
+**/coverage
+**/htmlcov
+**/playwright-report
+**/test-results
+
+**/.pytest_cache
