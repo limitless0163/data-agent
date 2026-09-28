@@ -9,9 +9,7 @@ Thumbs.db
 Desktop.ini
 
 # ===== IDE / 编辑器 =====
-.vscode/*
-!.vscode/extensions.json
-!.vscode/settings.json
+.vscode/
 .idea/
 *.swp
 *.swo
@@ -112,3 +110,6 @@ temp/
 *.rej
 data/
 uploads/
+
+# ===== 文档 =====
+docs/掌柜问数.docx
