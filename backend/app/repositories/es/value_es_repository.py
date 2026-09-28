@@ -39,7 +39,10 @@ class ValueESRepository:
                     {"index": {"_index": self.index_name, "_id": value_info.id}}
                 )
                 operations.append(asdict(value_info))
-            await self.client.bulk(operations=operations)
+            result = await self.client.bulk(operations=operations)
+            if result.get("errors"):
+                # bulk 的 HTTP 成功不代表每条文档都写入成功。
+                raise RuntimeError("Elasticsearch 批量写入包含失败项")
 
     async def search(
         self, keyword: str, score_threshold: float = 0.6, limit: int = 5

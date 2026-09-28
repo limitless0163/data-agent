@@ -1,4 +1,4 @@
-from contextlib import asynccontextmanager
+from contextlib import AsyncExitStack, asynccontextmanager
 
 from fastapi import FastAPI
 
@@ -13,17 +13,15 @@ from app.db.qdrant_client_manager import qdrant_client_manager
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # FastAPI 应用启动前执行
-    embedding_client_manager.init()
-    qdrant_client_manager.init()
-    es_client_manager.init()
-    meta_mysql_client_manager.init()
-    dw_mysql_client_manager.init()
-
-    yield
-
-    # FastAPI 应用结束前执行
-    await qdrant_client_manager.close()
-    await es_client_manager.close()
-    await meta_mysql_client_manager.close()
-    await dw_mysql_client_manager.close()
+    # 每个成功初始化的客户端立即注册清理，启动或关闭失败也不泄漏资源。
+    async with AsyncExitStack() as stack:
+        embedding_client_manager.init()
+        for manager in (
+            qdrant_client_manager,
+            es_client_manager,
+            meta_mysql_client_manager,
+            dw_mysql_client_manager,
+        ):
+            manager.init()
+            stack.push_async_callback(manager.close)
+        yield

@@ -1,4 +1,4 @@
-from sqlalchemy import text
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.entities.column_info import ColumnInfo
@@ -55,11 +55,11 @@ class MetaMySQLRepository:
         return None
 
     async def get_key_columns_by_table_id(self, table_id: str) -> list[ColumnInfo]:
-        sql = """
-            select * 
-            from column_info 
-            where table_id = :table_id 
-            and role in ('primary_key', 'foreign_key')
-        """
-        result = await self.session.execute(text(sql), {"table_id": table_id})
-        return [ColumnInfo(**row) for row in result.mappings().fetchall()]
+        # ORM 查询保留 JSON 类型处理，避免原始 SQL 把 examples/alias 返回为字符串。
+        result = await self.session.execute(
+            select(ColumnInfoMySQL).where(
+                ColumnInfoMySQL.table_id == table_id,
+                ColumnInfoMySQL.role.in_(["primary_key", "foreign_key"]),
+            )
+        )
+        return [ColumnInfoMapper.to_entity(model) for model in result.scalars().all()]
