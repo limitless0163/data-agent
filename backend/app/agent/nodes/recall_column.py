@@ -1,13 +1,12 @@
-from langchain_core.output_parsers import JsonOutputParser
-from langchain_core.prompts import PromptTemplate
-from langgraph.runtime import Runtime
-
 from app.agent.context import DataAgentContext
 from app.agent.llm import get_llm
+from app.agent.prompt_loader import load_prompt
 from app.agent.state import DataAgentState
 from app.core.log import logger
 from app.entities.column_info import ColumnInfo
-from app.agent.prompt_loader import load_prompt
+from langchain_core.output_parsers import JsonOutputParser
+from langchain_core.prompts import PromptTemplate
+from langgraph.runtime import Runtime
 
 
 async def recall_column(state: DataAgentState, runtime: Runtime[DataAgentContext]):
@@ -54,8 +53,8 @@ async def recall_column(state: DataAgentState, runtime: Runtime[DataAgentContext
         writer({"type": "progress", "step": "召回字段", "status": "success"})
         logger.info(f"召回字段信息：{list(retrieved_columns_map.keys())}")
         return {"retrieved_columns": retrieved_columns}
-    
+
     except Exception as e:
         writer({"type": "progress", "step": "召回字段", "status": "error"})
-        logger.error(f"召回字段信息失败: {str(e)}")
+        logger.error(f"召回字段信息失败: {e!s}")
         raise

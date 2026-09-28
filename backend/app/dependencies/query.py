@@ -1,10 +1,11 @@
-from fastapi import Depends
-from langchain_huggingface import HuggingFaceEndpointEmbeddings
-from sqlalchemy.ext.asyncio import AsyncSession
+from typing import Annotated
 
 from app.core.clients.embedding_client_manager import embedding_client_manager
 from app.db.es_client_manager import es_client_manager
-from app.db.mysql_client_manager import meta_mysql_client_manager, dw_mysql_client_manager
+from app.db.mysql_client_manager import (
+    dw_mysql_client_manager,
+    meta_mysql_client_manager,
+)
 from app.db.qdrant_client_manager import qdrant_client_manager
 from app.repositories.es.value_es_repository import ValueESRepository
 from app.repositories.mysql.dw.dw_mysql_repository import DWMySQLRepository
@@ -12,6 +13,9 @@ from app.repositories.mysql.meta.meta_mysql_repository import MetaMySQLRepositor
 from app.repositories.qdrant.column_qdrant_repository import ColumnQdrantRepository
 from app.repositories.qdrant.metric_qdrant_repository import MetricQdrantRepository
 from app.services.query_service import QueryService
+from fastapi import Depends
+from langchain_huggingface import HuggingFaceEndpointEmbeddings
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 async def get_meta_session():
@@ -40,21 +44,33 @@ async def get_metric_qdrant_repository():
     return MetricQdrantRepository(qdrant_client_manager.client)
 
 
-async def get_meta_mysql_repository(session: AsyncSession = Depends(get_meta_session)):
+async def get_meta_mysql_repository(
+    session: Annotated[AsyncSession, Depends(get_meta_session)],
+):
     return MetaMySQLRepository(session)
 
 
-async def get_dw_mysql_repository(session: AsyncSession = Depends(get_dw_session)):
+async def get_dw_mysql_repository(
+    session: Annotated[AsyncSession, Depends(get_dw_session)],
+):
     return DWMySQLRepository(session)
 
 
 async def get_query_service(
-        embedding_client: HuggingFaceEndpointEmbeddings = Depends(get_embedding_client),
-        column_qdrant_repository: ColumnQdrantRepository = Depends(get_column_qdrant_repository),
-        value_es_repository: ValueESRepository = Depends(get_value_es_repository),
-        metric_qdrant_repository: MetricQdrantRepository = Depends(get_metric_qdrant_repository),
-        meta_mysql_repository: MetaMySQLRepository = Depends(get_meta_mysql_repository),
-        dw_mysql_repository: DWMySQLRepository = Depends(get_dw_mysql_repository)
+    embedding_client: Annotated[
+        HuggingFaceEndpointEmbeddings, Depends(get_embedding_client)
+    ],
+    column_qdrant_repository: Annotated[
+        ColumnQdrantRepository, Depends(get_column_qdrant_repository)
+    ],
+    value_es_repository: Annotated[ValueESRepository, Depends(get_value_es_repository)],
+    metric_qdrant_repository: Annotated[
+        MetricQdrantRepository, Depends(get_metric_qdrant_repository)
+    ],
+    meta_mysql_repository: Annotated[
+        MetaMySQLRepository, Depends(get_meta_mysql_repository)
+    ],
+    dw_mysql_repository: Annotated[DWMySQLRepository, Depends(get_dw_mysql_repository)],
 ) -> QueryService:
     return QueryService(
         embedding_client=embedding_client,
@@ -62,5 +78,5 @@ async def get_query_service(
         value_es_repository=value_es_repository,
         metric_qdrant_repository=metric_qdrant_repository,
         meta_mysql_repository=meta_mysql_repository,
-        dw_mysql_repository=dw_mysql_repository
+        dw_mysql_repository=dw_mysql_repository,
     )

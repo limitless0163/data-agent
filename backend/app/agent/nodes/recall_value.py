@@ -1,13 +1,12 @@
-from langchain_core.output_parsers import JsonOutputParser
-from langchain_core.prompts import PromptTemplate
-from langgraph.runtime import Runtime
-
 from app.agent.context import DataAgentContext
 from app.agent.llm import get_llm
+from app.agent.prompt_loader import load_prompt
 from app.agent.state import DataAgentState
 from app.core.log import logger
 from app.entities.value_info import ValueInfo
-from app.agent.prompt_loader import load_prompt
+from langchain_core.output_parsers import JsonOutputParser
+from langchain_core.prompts import PromptTemplate
+from langgraph.runtime import Runtime
 
 
 async def recall_value(state: DataAgentState, runtime: Runtime[DataAgentContext]):
@@ -21,7 +20,10 @@ async def recall_value(state: DataAgentState, runtime: Runtime[DataAgentContext]
 
     try:
         # 使用LLM扩展关键词
-        prompt = PromptTemplate(template=load_prompt("extend_keywords_for_value_recall"), input_variables=["query"])
+        prompt = PromptTemplate(
+            template=load_prompt("extend_keywords_for_value_recall"),
+            input_variables=["query"],
+        )
         llm = get_llm()
         output_parser = JsonOutputParser()
 
@@ -45,9 +47,9 @@ async def recall_value(state: DataAgentState, runtime: Runtime[DataAgentContext]
 
         writer({"type": "progress", "step": "召回字段取值", "status": "success"})
         logger.info(f"召回字段取值：{list(values_map.keys())}")
-        return {'retrieved_values': retrieved_values}
-    
+        return {"retrieved_values": retrieved_values}
+
     except Exception as e:
         writer({"type": "progress", "step": "召回字段取值", "status": "error"})
-        logger.error(f"召回字段取值失败: {str(e)}")
+        logger.error(f"召回字段取值失败: {e!s}")
         raise

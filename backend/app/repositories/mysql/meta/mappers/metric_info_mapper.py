@@ -12,7 +12,7 @@ class MetricInfoMapper:
             name=model.name,
             description=model.description,
             relevant_columns=model.relevant_columns,
-            alias=model.alias
+            alias=model.alias,
         )
 
     @staticmethod

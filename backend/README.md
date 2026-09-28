@@ -223,7 +223,9 @@ async def query(self, query: str):
     context = DataAgentContext(...)
     state = DataAgentState(query=query)
     try:
-        async for chunk in graph.astream(input=state, context=context, stream_mode="custom"):
+        async for chunk in graph.astream(
+            input=state, context=context, stream_mode="custom"
+        ):
             yield f"data: {json.dumps(chunk, ensure_ascii=False, default=str)}\n\n"
     except Exception as e:
         yield f"data: {json.dumps({'type': 'error', 'message': str(e)}, ensure_ascii=False, default=str)}\n\n"

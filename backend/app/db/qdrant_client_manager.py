@@ -1,14 +1,11 @@
-from typing import Optional
-
-from qdrant_client import AsyncQdrantClient
-
 from app.core.config.app_config import QdrantConfig, app_config
+from qdrant_client import AsyncQdrantClient
 
 
 class QdrantClientManager:
     def __init__(self, qdrant_config: QdrantConfig):
         self.qdrant_config = qdrant_config
-        self.client: Optional[AsyncQdrantClient] = None
+        self.client: AsyncQdrantClient | None = None
 
     def _get_url(self):
         return f"http://{self.qdrant_config.host}:{self.qdrant_config.port}"

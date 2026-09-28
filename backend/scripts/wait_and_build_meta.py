@@ -6,6 +6,7 @@ import time
 
 import asyncmy
 import httpx
+from app.core.log import logger
 
 
 async def mysql_ready() -> bool:
@@ -26,11 +27,16 @@ async def mysql_ready() -> bool:
 
 
 async def dependency_status(client: httpx.AsyncClient) -> dict[str, bool]:
-    results = {"mysql": False, "elasticsearch": False, "qdrant": False, "embeddings": False}
+    results = {
+        "mysql": False,
+        "elasticsearch": False,
+        "qdrant": False,
+        "embeddings": False,
+    }
     try:
         results["mysql"] = await mysql_ready()
-    except Exception:
-        pass
+    except Exception as e:  # noqa: BLE001 -- Any connection failure means MySQL is not ready yet.
+        logger.debug(f"MySQL dependency is not ready: {e!s}")
 
     endpoints = {
         "elasticsearch": "http://elasticsearch:9200/",
@@ -41,8 +47,8 @@ async def dependency_status(client: httpx.AsyncClient) -> dict[str, bool]:
         try:
             response = await client.get(url)
             results[name] = response.is_success
-        except Exception:
-            pass
+        except httpx.HTTPError as e:
+            logger.debug(f"{name} dependency is not ready: {e!s}")
     return results
 
 
@@ -53,11 +59,16 @@ async def wait_until_ready() -> None:
             status = await dependency_status(client)
             waiting = [name for name, ready in status.items() if not ready]
             if not waiting:
-                print("MySQL, Elasticsearch, Qdrant, and the embedding model are ready.", flush=True)
+                print(
+                    "MySQL, Elasticsearch, Qdrant, and the embedding model are ready.",
+                    flush=True,
+                )
                 return
             print(f"Waiting for services: {', '.join(waiting)}", flush=True)
             await asyncio.sleep(5)
-    raise TimeoutError("Timed out waiting for database, search, vector, or embedding services")
+    raise TimeoutError(
+        "Timed out waiting for database, search, vector, or embedding services"
+    )
 
 
 if __name__ == "__main__":

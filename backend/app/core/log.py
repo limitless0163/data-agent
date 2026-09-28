@@ -1,11 +1,9 @@
 import sys
 from pathlib import Path
 
-from loguru import logger
-
 from app.core.config.app_config import app_config
 from app.core.context import request_id_ctx_var
-
+from loguru import logger
 
 # 配置日志格式
 log_format = (
@@ -26,11 +24,13 @@ def inject_request_id(record):
 logger.remove()
 
 # 给日志打补丁，使其支持注入request_id
-logger = logger.patch(inject_request_id) 
+logger = logger.patch(inject_request_id)
 
 if app_config.logging.console.enable:
-    logger.add(sink=sys.stdout, level=app_config.logging.console.level, format=log_format)
-    
+    logger.add(
+        sink=sys.stdout, level=app_config.logging.console.level, format=log_format
+    )
+
 if app_config.logging.file.enable:
     path = Path(app_config.logging.file.path)
     path.mkdir(parents=True, exist_ok=True)
@@ -40,5 +40,5 @@ if app_config.logging.file.enable:
         format=log_format,
         rotation=app_config.logging.file.rotation,
         retention=app_config.logging.file.retention,
-        encoding="utf-8"
+        encoding="utf-8",
     )

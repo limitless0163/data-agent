@@ -1,8 +1,8 @@
-from langgraph.runtime import Runtime
-
 from app.agent.context import DataAgentContext
 from app.agent.state import DataAgentState
 from app.core.log import logger
+from langgraph.runtime import Runtime
+from sqlalchemy.exc import SQLAlchemyError
 
 
 async def validate_sql(state: DataAgentState, runtime: Runtime[DataAgentContext]):
@@ -18,8 +18,8 @@ async def validate_sql(state: DataAgentState, runtime: Runtime[DataAgentContext]
         writer({"type": "progress", "step": "验证SQL", "status": "success"})
         logger.info(f"SQL验证成功: {sql}")
         return {"error": None}
-    
-    except Exception as e:
+
+    except SQLAlchemyError as e:
         writer({"type": "progress", "step": "验证SQL", "status": "error"})
         logger.error(f"SQL验证失败: {sql}")
         return {"error": str(e)}

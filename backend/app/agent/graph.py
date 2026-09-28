@@ -1,6 +1,3 @@
-from langgraph.constants import END, START
-from langgraph.graph import StateGraph
-
 from app.agent.context import DataAgentContext
 from app.agent.nodes.add_extra_context import add_extra_context
 from app.agent.nodes.correct_sql import correct_sql
@@ -15,6 +12,8 @@ from app.agent.nodes.recall_metric import recall_metric
 from app.agent.nodes.recall_value import recall_value
 from app.agent.nodes.validate_sql import validate_sql
 from app.agent.state import DataAgentState
+from langgraph.constants import END, START
+from langgraph.graph import StateGraph
 
 
 def _route_after_validation(state: DataAgentState) -> str:

@@ -40,18 +40,18 @@ class DBInfoState(TypedDict):
 
 
 class DataAgentState(TypedDict):
-    query: str              # 用户查询
-    keywords: list[str]     # 用户查询的关键字
+    query: str  # 用户查询
+    keywords: list[str]  # 用户查询的关键字
 
-    retrieved_columns: list[ColumnInfo]     # 召回的字段信息
-    retrieved_values: list[ValueInfo]       # 召回的值信息
-    retrieved_metrics: list[MetricInfo]     # 召回的指标信息
+    retrieved_columns: list[ColumnInfo]  # 召回的字段信息
+    retrieved_values: list[ValueInfo]  # 召回的值信息
+    retrieved_metrics: list[MetricInfo]  # 召回的指标信息
 
-    table_infos: list[TableInfoState]       # 表信息
-    metric_infos: list[MetricInfoState]     # 指标信息
+    table_infos: list[TableInfoState]  # 表信息
+    metric_infos: list[MetricInfoState]  # 指标信息
 
-    date_info: DateInfoState    # 日期信息
-    db_info: DBInfoState        # 数据库信息
+    date_info: DateInfoState  # 日期信息
+    db_info: DBInfoState  # 数据库信息
 
-    sql: str        # 生成的SQL
-    error: str      # 验证SQL时的错误信息
+    sql: str  # 生成的SQL
+    error: str  # 验证SQL时的错误信息

@@ -2,9 +2,6 @@ import uuid
 from decimal import Decimal
 from pathlib import Path
 
-from langchain_huggingface import HuggingFaceEndpointEmbeddings
-from omegaconf import OmegaConf
-
 from app.core.config.meta_config import MetaConfig
 from app.core.log import logger
 from app.entities.column_info import ColumnInfo
@@ -17,6 +14,8 @@ from app.repositories.mysql.dw.dw_mysql_repository import DWMySQLRepository
 from app.repositories.mysql.meta.meta_mysql_repository import MetaMySQLRepository
 from app.repositories.qdrant.column_qdrant_repository import ColumnQdrantRepository
 from app.repositories.qdrant.metric_qdrant_repository import MetricQdrantRepository
+from langchain_huggingface import HuggingFaceEndpointEmbeddings
+from omegaconf import OmegaConf
 
 
 class MetaKnowledgeService:
@@ -36,7 +35,9 @@ class MetaKnowledgeService:
         self.value_es_repository = value_es_repository
         self.metric_qdrant_repository = metric_qdrant_repository
 
-    async def _save_tables_to_meta_db(self, meta_config: MetaConfig)-> list[ColumnInfo]:
+    async def _save_tables_to_meta_db(
+        self, meta_config: MetaConfig
+    ) -> list[ColumnInfo]:
         table_infos: list[TableInfo] = []
         column_infos: list[ColumnInfo] = []
 
@@ -51,12 +52,15 @@ class MetaKnowledgeService:
             table_infos.append(table_info)
 
             # 查询该表的所有字段类型
-            column_types: dict[str, str] = await self.dw_mysql_repository.get_column_types(table.name)
+            column_types: dict[
+                str, str
+            ] = await self.dw_mysql_repository.get_column_types(table.name)
             for column in table.columns:
                 # 查询该字段的部分取值作为示例
-                column_values: list = await self.dw_mysql_repository.get_column_values(table.name, column.name, 10)
-                # MySQL DECIMAL values are returned as Decimal, which is not
-                # directly JSON serializable in the metadata examples column.
+                column_values: list = await self.dw_mysql_repository.get_column_values(
+                    table.name, column.name, 10
+                )
+                # MySQL DECIMAL values are returned as Decimal, which is not directly JSON serializable in the metadata examples column.
                 column_values = [
                     float(value) if isinstance(value, Decimal) else value
                     for value in column_values
@@ -130,7 +134,7 @@ class MetaKnowledgeService:
     ):
         # 取保index存在
         await self.value_es_repository.ensure_index()
-        
+
         # 获取需要同步取值的列
         column2sync: dict[str, bool] = {}
         for table in meta_config.tables:
@@ -190,7 +194,7 @@ class MetaKnowledgeService:
     async def _save_metric_info_to_qdrant(self, metric_infos: list[MetricInfo]):
         # 确保collection存在
         await self.metric_qdrant_repository.ensure_collection()
-        
+
         # 构造待保存的数据
         points: list[dict] = []
         for metric_info in metric_infos:

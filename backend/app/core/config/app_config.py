@@ -81,7 +81,7 @@ def _load_app_config() -> AppConfig:
     project_root = Path(__file__).resolve().parents[4]
     load_dotenv(project_root / ".env", override=False)
 
-    config_file = Path(__file__).with_name('app_config.yaml')
+    config_file = Path(__file__).with_name("app_config.yaml")
     context = OmegaConf.load(config_file)
 
     # 容器部署时通过环境变量配置 Compose 服务名和运行时密钥；本地开发仍可使用仓库中的 YAML 默认配置。

@@ -1,6 +1,3 @@
-from sqlalchemy import text
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.entities.column_info import ColumnInfo
 from app.entities.column_metric import ColumnMetric
 from app.entities.metric_info import MetricInfo
@@ -11,6 +8,8 @@ from app.repositories.mysql.meta.mappers.column_info_mapper import ColumnInfoMap
 from app.repositories.mysql.meta.mappers.column_metric_mapper import ColumnMetricMapper
 from app.repositories.mysql.meta.mappers.metric_info_mapper import MetricInfoMapper
 from app.repositories.mysql.meta.mappers.table_info_mapper import TableInfoMapper
+from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class MetaMySQLRepository:
@@ -22,17 +21,28 @@ class MetaMySQLRepository:
         self.session.add_all(models)
 
     async def save_column_infos(self, columns_info: list[ColumnInfo]):
-        models = [ColumnInfoMapper.to_model(column_info) for column_info in columns_info]
+        models = [
+            ColumnInfoMapper.to_model(column_info) for column_info in columns_info
+        ]
         self.session.add_all(models)
 
     async def save_metric_infos(self, metric_infos: list[MetricInfo]):
-        self.session.add_all([MetricInfoMapper.to_model(metric_info) for metric_info in metric_infos])
+        self.session.add_all(
+            [MetricInfoMapper.to_model(metric_info) for metric_info in metric_infos]
+        )
 
     async def save_column_metrics(self, column_metrics: list[ColumnMetric]):
-        self.session.add_all([ColumnMetricMapper.to_model(column_metric) for column_metric in column_metrics])
+        self.session.add_all(
+            [
+                ColumnMetricMapper.to_model(column_metric)
+                for column_metric in column_metrics
+            ]
+        )
 
     async def get_column_info_by_id(self, column_id: str) -> ColumnInfo | None:
-        result: ColumnInfoMySQL | None = await self.session.get(ColumnInfoMySQL, column_id)
+        result: ColumnInfoMySQL | None = await self.session.get(
+            ColumnInfoMySQL, column_id
+        )
         if result:
             return ColumnInfoMapper.to_entity(result)
         return None
