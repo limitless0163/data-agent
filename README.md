@@ -1,202 +1,116 @@
-# 掌柜问数
+<h1 align="center">掌柜问数 · data-agent</h1>
 
-自然语言查询数据的 Web 应用。用户在前端输入中文问题，后端 LangGraph Agent 从 MySQL 元数据库 / Qdrant 向量库 / Elasticsearch 全文索引中检索相关表、字段和指标，结合 LLM 生成并校验 SQL，最终在数据仓库 MySQL 上执行并以 SSE 流式返回结果表格。
+<p align="center">Ask questions in Chinese. Get answers from your data warehouse.</p>
 
-- 前端：TypeScript + React 19 + Next.js 16（App Router）
-- 后端：Python 3.11 + FastAPI + LangGraph + SQLAlchemy（asyncmy）
-- 依赖服务：MySQL 8.4（`meta` + `dw` 双库）、Elasticsearch 8.19、Qdrant 1.16、text-embeddings-inference（`BAAI/bge-large-zh-v1.5`）
-- LLM：DeepSeek（`deepseek-flash`）
-- 编排：Docker Compose（单 Compose 文件，通过 profile 区分 dev / prod）
+<p align="center">
+  <a href="./README.md">English</a> |
+  <a href="./README_zh.md">简体中文</a>
+</p>
 
-外部访问入口：[http://localhost:8080](http://localhost:8080)（前端 Next.js，端口 8080 → 容器内 3000）。
+## Overview
 
-## 架构
+data-agent is a natural-language-to-SQL web application for querying a MySQL data warehouse without writing SQL by hand. It retrieves relevant schema, field values, and metric definitions, generates and validates a query, and displays the results in a chat interface with live progress updates.
 
-### 服务拓扑
+The included retail dataset covers orders, customers, products, regions, and dates. The interface, business metadata, and agent prompts are in Chinese.
 
-| 服务 | 镜像 / 构建 | 暴露端口 | 说明 |
-| --- | --- | --- | --- |
-| `mysql` | `mysql:8.4` | 容器内 3306 | `meta` + `dw` 两个数据库，从 `infra/docker/mysql/init.sql` 初始化 |
-| `elasticsearch` | `docker.elastic.co/elasticsearch/elasticsearch:8.19.3` | 容器内 9200 | 单节点、关闭安全策略，存储字段取值全文索引 |
-| `qdrant` | `qdrant/qdrant:v1.16.2` | 容器内 6333 | 字段、指标的向量索引（cosine, dim 1024） |
-| `embeddings` | `ghcr.io/huggingface/text-embeddings-inference:cpu-arm64-1.9` | 容器内 80 | 提供 `BAAI/bge-large-zh-v1.5` 向量服务 |
-| `knowledge-init` | `./backend/Dockerfile`（`restart: no`） | — | 等待依赖就绪后执行 `scripts.wait_and_build_meta`；`/state/ready` 已存在则跳过 |
-| `backend` | `./backend/Dockerfile` | 容器内 8000 | FastAPI + uvicorn，仅在 MySQL 健康且 `knowledge-init` 成功后启动 |
-| `frontend` | `frontend/Dockerfile` 的 `production` target（`prod` profile） | 8080 → 3000 | Next.js standalone 生产镜像 |
-| `frontend-dev` | `frontend/Dockerfile` 的 `dev` target（`dev` profile） | 8080 → 3000 | Next.js 开发服务器；挂载源码支持 HMR |
+## Key Features
 
-`docker-compose.yml` 通过 `dev` / `prod` profile 选择开发或生产前端；`&backend-environment` YAML 锚点把 MySQL/Qdrant/ES/Embeddings/DeepSeek 的连接信息同时注入 `knowledge-init` 和 `backend`。
+- **Chinese questions → SQL results:** query warehouse data from a single chat page.
+- **Metadata retrieval:** combine semantic search for fields and metrics with full-text search for actual field values.
+- **SQL validation and correction:** check generated SQL with MySQL `EXPLAIN` and attempt one correction when database validation fails.
+- **Live progress and tables:** stream agent steps, results, and errors to the browser over SSE.
+- **Configurable knowledge:** define table descriptions, field aliases, and metrics in YAML.
 
-### 请求链路
+## Tech Stack
 
-```
-Browser (8080)
-  → frontend/src/app/api/query/route.ts   ← SSE 代理
-  → backend POST /api/query
-  → QueryService.query
-  → LangGraph graph.astream(stream_mode="custom")
-        extract_keywords → recall_column / recall_value / recall_metric
-        → merge_retrieved_info → filter_table / filter_metric
-        → add_extra_context → generate_sql → validate_sql → (correct_sql) → execute_sql
-  → StreamingResponse(text/event-stream) → 前端 ChatPage 渲染
-```
+<p>
+  <img src="https://img.shields.io/badge/Python-3.11.2-3776AB?logo=python&amp;logoColor=white" alt="Python 3.11.2">
+  <img src="https://img.shields.io/badge/FastAPI-009688?logo=fastapi&amp;logoColor=white" alt="FastAPI">
+  <img src="https://img.shields.io/badge/Next.js-16-000000?logo=nextdotjs&amp;logoColor=white" alt="Next.js 16">
+  <img src="https://img.shields.io/badge/React-19-149ECA?logo=react&amp;logoColor=white" alt="React 19">
+  <img src="https://img.shields.io/badge/LangGraph-1-1C3C3C" alt="LangGraph 1">
+</p>
 
-后端只读取 `dw` 数据仓库（`execute_sql`、`validate_sql` 都对它跑 `EXPLAIN` + `SELECT`）。`meta` 仅用于保存元知识（表、字段、指标、字段-指标关系）。前端是 Next.js 服务端组件 + 一个 SSE 转发路由（`runtime = "nodejs"`）。
+| Layer | Technologies |
+| --- | --- |
+| Frontend | Next.js App Router, React, TypeScript, CSS |
+| Backend / Agent | FastAPI, LangGraph, LangChain, DeepSeek, SQLAlchemy + asyncmy |
+| Data / Retrieval | MySQL, Qdrant, Elasticsearch, BGE embeddings via Hugging Face Text Embeddings Inference |
+| Infrastructure | Docker Compose, uv, npm |
+| Testing | pytest, Vitest, Testing Library, Playwright, GitHub Actions |
 
-## 仓库结构
+## Architecture
 
-```
-.
-├── backend/        FastAPI + LangGraph Agent（详见 backend/README.md、backend/AGENTS.md）
-├── frontend/       Next.js 聊天页（详见 frontend/README.md、frontend/AGENTS.md）
-├── infra/
-│   └── docker/mysql/init.sql        DW 种子数据 + meta 库 DDL，首次启动 MySQL 时执行
-├── docs/           项目规范（ARCHITECTURE_INSTRUCTIONS、COMMIT_INSTRUCTIONS 等）
-├── tests/e2e/      浏览器与跨服务测试
-├── .github/workflows/tests.yml    自动测试 CI
-├── scripts/
-│   └── smoke.sh    HTTP 探活脚本（make smoke）
-├── docker-compose.yml
-├── Makefile
-├── .env.example
-├── AGENTS.md       编码 Agent 协作指南（根）
-└── README.md
+```mermaid
+flowchart LR
+    UI[Chat page] --> Proxy[Next.js API proxy]
+    Proxy --> Agent[FastAPI + LangGraph]
+    Knowledge[Metadata: MySQL / Qdrant / Elasticsearch] --> Agent
+    Agent --> SQL[Generate + validate SQL]
+    SQL --> DW[(MySQL warehouse)]
+    DW --> Agent
+    Agent -->|SSE progress + results| Proxy
+    Proxy --> UI
 ```
 
-`tests/e2e/` 保存系统级跨端测试；模块单元/集成测试分别在 `backend/tests/`、`frontend/tests/`。其余目录仅在出现真实职责时创建。
+On first startup, the metadata knowledge base is built before the backend starts. See the [backend guide](backend/README.md) for the agent workflow and configuration.
 
-## 前置条件
+## Quick Start
 
-- Docker Desktop（Compose 编排需要）
-- `make`（根 Makefile 是唯一的命令面）
-- 一个 DeepSeek API Key（写入 `.env` 的 `DEEPSEEK_API_KEY`）
-- 本地（非 Docker）后端开发：Python 3.11.2（与 `backend/.python-version`、`backend/pyproject.toml` 的 `>=3.11.2,<3.12` 完全一致）
-- 本地（非 Docker）前端开发：Node 22（匹配 Dockerfile）
-
-## 快速开始
-
-### 1. 准备环境
+Requirements: Docker with Compose, `make`, and a DeepSeek API key. The Compose file currently uses an ARM64 CPU embedding image; other architectures may require a compatible image.
 
 ```bash
+git clone https://github.com/limitless0163/data-agent.git
+cd data-agent
 cp .env.example .env
-# 编辑 .env，填入 DEEPSEEK_API_KEY；其它变量使用默认值即可
 ```
 
-`make dev` 和 `make prod` 会先检查 Docker daemon。macOS 上如果 Docker Desktop 尚未运行，命令会自动打开它并等待就绪；其它系统请先启动 Docker daemon。
-
-### 2. 启动开发栈
+Set `DEEPSEEK_API_KEY` in `.env`, then start the stack:
 
 ```bash
-make dev       # 或 make up；别名相同
-```
-
-首次启动会拉取镜像、下载 BGE 中文向量模型（数百 MB）、等待 MySQL 种子完成，然后跑 `knowledge-init` 构建元知识库。观察进度：
-
-```bash
-make ps        # 查看各服务状态
-make logs      # 跟踪日志
-make logs SERVICE=frontend-dev   # 只看开发前端
-make logs SERVICE=knowledge-init   # 查看元知识库初始化
-```
-
-启动完成后访问 [http://localhost:8080](http://localhost:8080)。前端容器挂了源码（`./frontend:/app`，`WATCHPACK_POLLING=true`），修改前端文件会热更新；后端在 Compose 中**不**启用 `--reload`，需 `make restart SERVICE=backend` 才能让后端改动生效。
-
-### 3. 生产启动
-
-```bash
-make prod
-```
-
-`make prod` 启用 `prod` profile，使用 `frontend/Dockerfile` 的 `production` target（多阶段构建 standalone 镜像），不挂载源码。
-
-### 4. 验证
-
-```bash
-make smoke     # 检查前端 /、后端 /openapi.json、POST /api/query 校验（详见 scripts/smoke.sh）
-make typecheck # exec 进前端容器跑 tsc --noEmit
-```
-
-## 自动化测试
-
-首次安装：`make test-install`。本地测试需要 Python 3.11.2、uv、Node 22.22.2+（22.x）、npm 和 make，无需 Docker、`.env` 或真实外部服务。
-
-```sh
-make test             # 后端 + 前端类型检查/测试 + 跨端 E2E
-make test-backend     # pytest、TestClient API、Agent、Repository、内存数据库集成
-make test-frontend    # Vitest / Testing Library + tsc
-make test-e2e         # Chromium → Next.js → FastAPI → Agent → 内存 SQL
-make test-coverage    # 同一套测试 + 前后端覆盖率报告及门禁
-```
-
-CI 在每次 push/PR 执行完整测试、覆盖率门禁与前端生产构建。测试隔离、指定文件运行、报告位置与尚未覆盖的风险详见 [docs/TESTING.md](docs/TESTING.md)。
-
-## 配置
-
-### 运行时环境变量（`.env`）
-
-| 变量 | 必填 | 说明 |
-| --- | --- | --- |
-| `DEEPSEEK_API_KEY` | ✅ | DeepSeek 平台密钥；Compose 会注入 `knowledge-init` 和 `backend` |
-| `MYSQL_ROOT_PASSWORD` | — | MySQL `root` 密码，默认 `local-root-password` |
-| `DATA_AGENT_DB_PASSWORD` | — | MySQL 应用用户 `atguigu` 密码，默认 `Atguigu.123` |
-
-`.env` 被 git 忽略（`.env*`），请勿提交。
-
-### 后端 YAML
-
-- `backend/app/core/config/app_config.yaml` — 提交到 git 的基础配置，Compose 和本地开发共用。
-- API key 等秘密不要写入这个文件；通过 `.env` 或环境变量提供。运行时通过 `DATA_AGENT_DB_*` / `DATA_AGENT_QDRANT_*` / `DATA_AGENT_EMBEDDING_*` / `DATA_AGENT_ES_*` / `DATA_AGENT_LLM_API_KEY` 覆盖 YAML 中的字段。`app/core/config/app_config.py` 集中处理。
-
-### 元知识源
-
-`backend/app/core/config/meta_config.yaml` 定义了表、字段、字段角色、字段类型、字段别名、字段示例以及指标、指标的关联字段、指标别名。`knowledge-init` 服务调用 `MetaKnowledgeService.build` 据此写入 `meta` MySQL（结构化元数据）、Qdrant（字段 / 指标向量）、Elasticsearch（`sync: true` 列的取值全文索引）。`knowledge-init` 通过 `knowledge_state` 卷上的 `/state/ready` 文件做幂等控制；新增 / 修改表或指标后需要删除这个标记重建：
-
-```bash
-make stop
-docker volume rm data-agent_knowledge_state   # 容器卷名带项目前缀
 make dev
 ```
 
-### 前端后端地址
+On macOS, the command opens Docker Desktop if needed; on other systems, start Docker Engine first. The first run pulls images, downloads the embedding model, seeds MySQL, and builds the knowledge base. Use `make ps` or `make logs SERVICE=knowledge-init` to check startup progress.
 
-`API_BASE_URL`（服务端环境变量），默认 `http://localhost:8000`；Compose 内置 `http://backend:8000`。仅在 `frontend/src/app/api/query/route.ts`（Node 运行时）中读取，不会泄漏到客户端 bundle。
+Once ready, open [http://localhost:8080](http://localhost:8080) and ask, for example, `2025年各地区的销售总额是多少？` Run `make smoke` to check the frontend and backend HTTP path.
 
-## 常用命令
+## Project Structure
 
-| 目标 | 命令 |
+```text
+.
+├── backend/            # FastAPI, agent, metadata builder, and backend tests
+├── frontend/           # Next.js chat interface and frontend tests
+├── infra/              # MySQL initialization and sample data
+├── tests/e2e/          # Browser and cross-service tests
+├── scripts/            # HTTP smoke checks
+├── docs/               # Implementation notes and project conventions
+├── docker-compose.yml  # Shared services and dev/prod profiles
+└── Makefile            # Stack orchestration and test commands
+```
+
+## Development
+
+Run these commands from the repository root:
+
+| Command | Purpose |
 | --- | --- |
-| 启动开发栈（HMR 前端） | `make dev` / `make up` |
-| 启动生产栈 | `make prod` |
-| 停止（保留卷与容器） | `make stop` / `make down` |
-| 重启 | `make restart [SERVICE=backend]` |
-| 查看状态 | `make ps` |
-| 跟踪日志 | `make logs [SERVICE=frontend-dev]` |
-| HTTP 探活 | `make smoke` |
-| 前端类型检查 | `make typecheck` |
-| 构建生产镜像 | `make build` |
-| 列出所有命令 | `make help` |
+| `make dev` | Build and start the development stack with frontend hot reload |
+| `make prod` | Build and start the stack with the production frontend |
+| `make stop` | Stop services, keeping containers and data volumes |
+| `make ps` / `make logs` | Inspect service status / follow logs |
+| `make smoke` | Check HTTP connectivity and request validation |
+| `make typecheck` | Check TypeScript in the running `frontend-dev` container |
+| `make test-install` / `make test` | Install native test dependencies / run all test layers |
+| `make test-coverage` | Run all tests with backend and frontend coverage gates |
+| `make help` | List available commands |
 
-后端 / 前端各自的原生开发命令详见 `backend/README.md` 与 `frontend/README.md`。
+Native development and tests use Python 3.11.2, uv, Node 22.22.2+ (22.x), and npm. Automated tests use isolated substitutes for external services and need no real API credentials. CI runs coverage checks and a production frontend build on pushes and pull requests.
 
-## API 契约
+## Documentation
 
-- `POST /api/query`（前端 Next.js 路由 → 后端）请求体 `{ "query": string }`，响应 `text/event-stream`。
-- 每个事件格式：`data: <json>\n\n`，前端解析器（`frontend/src/services/query.ts`）忽略无法解析的事件。
-- 事件类型（`frontend/src/types/query.ts`，由后端 `QueryService` 生成）：
-  - `{ "type": "progress", "step": string, "status": "running" | "success" | "error" }`
-  - `{ "type": "result", "data": Record<string, unknown>[] }`
-  - `{ "type": "error", "message": string }`
-
-## 关键特性
-
-- **元知识驱动的检索**：`meta_config.yaml` 是元数据唯一来源；启动时由 `knowledge-init` 一次性构建 `meta` MySQL、`data-agent-column` / `data-agent-metric` Qdrant collection、`data-agent-value` ES 索引。
-- **LangGraph 多路召回 + 过滤 + 校验**：并行召回字段 / 字段取值 / 指标；合并后用 LLM 过滤；调用 LLM 生成 SQL；`EXPLAIN` 校验失败会进入 `correct_sql` 节点重试；最终 `execute_sql` 输出 `result`。
-- **SSE 流式体验**：每完成一个节点都向浏览器推一个 `progress` 事件，`result` 事件携带结果表行。
-- **生产级 Dockerfile**：后端使用 `python:3.11.2-bullseye` + uv + `uv sync --frozen`；前端使用 Next.js standalone 输出。
-
-## 模块文档
-
-- [frontend/README.md](frontend/README.md) — 前端栈、命令、路由、环境变量、源码结构
-- [backend/README.md](backend/README.md) — 后端架构、组件、配置、运行、源码结构
-- [AGENTS.md](AGENTS.md) — 编码 Agent 协作的根指南
-- [backend/AGENTS.md](backend/AGENTS.md) / [frontend/AGENTS.md](frontend/AGENTS.md) — 模块级 Agent 指南
+- [Frontend guide](frontend/README.md) — setup, routes, streaming, and tests.
+- [Backend guide](backend/README.md) — workflow, API, configuration, and tests.
+- [Implementation notes (Chinese)](docs/DATA-AGENT.md) — metadata knowledge base and agent internals.
+- [Directory conventions](docs/ARCHITECTURE_INSTRUCTIONS.md) — repository organization.
+- [Agent guidance](AGENTS.md) — repository orientation and module guides.

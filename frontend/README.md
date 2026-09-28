@@ -1,158 +1,126 @@
-# frontend
+# Frontend
 
-TypeScript + React 19 + Next.js 16（App Router）实现的单页聊天界面。用户在输入框中提交自然语言问题，前端通过 `POST /api/query`（Next.js Route Handler，SSE 转发）拿到后端 LangGraph Agent 的流式事件，将每个步骤状态实时显示为气泡，最终结果以表格形式渲染。
+The Next.js frontend provides the Chinese chat interface for 掌柜问数. It submits questions through a server-side API proxy, consumes backend SSE events, and renders progress steps, result tables, and errors.
 
-| 关注点 | 技术 |
+## Stack
+
+| Area | Technology |
 | --- | --- |
-| 框架 | Next.js 16（App Router） |
-| UI 库 | React 19.3 |
-| 语言 | TypeScript 5.9（`strict`、`noEmit`、`moduleResolution: "bundler"`） |
-| 运行时 | Node 22（`Dockerfile` 的 dev / production targets） |
-| 样式 | 原生 CSS + `:root` CSS 变量（`src/styles/style.css`，仅亮色主题） |
-| 状态管理 | 仅 React Hooks（`useState` + `useRef`） |
-| 路径别名 | 无；统一使用相对路径 |
+| Framework | Next.js 16.3.6, App Router |
+| UI | React / React DOM 19.3.0 |
+| Language | TypeScript 5.9.3; strict mode, relative imports |
+| Styling / State | Global CSS; React hooks |
+| Tests | Vitest 5.0.2, Testing Library, jsdom, Playwright |
+| Deployment | Node 22 Alpine; Next.js standalone output |
 
-## 先决条件
+Package versions above are resolved in [package-lock.json](package-lock.json); [package.json](package.json) declares the dependency ranges and scripts.
 
-- Node 22（测试需要 22.22.2+；`Dockerfile` 基镜像：`node:22-alpine`）
-- npm（仓库提交了 `package-lock.json`，使用 `npm ci`）
-- 后端 API 在本地 `http://localhost:8000` 运行，或通过 `API_BASE_URL` 指向远程后端
+## Local Setup
 
-> 推荐直接使用根目录的 `make dev` 启动完整栈；只有需要独立调试前端时才用下面的原生命令。
+Use Node **22.22.2+ (22.x)** and npm to match the project's Node 22 runtime and the locked test dependencies. For live queries, run the backend at `http://localhost:8000` or set `API_BASE_URL` to a reachable backend.
 
-## 安装
+From the repository root:
 
 ```bash
 cd frontend
 npm ci
+npm run dev
 ```
 
-## 命令
+Open [http://localhost:3000](http://localhost:3000). To run the complete stack with Compose instead, use `make dev` from the root and open [http://localhost:8080](http://localhost:8080).
 
-| 目标 | 命令 |
+## Commands
+
+Run from `frontend/`:
+
+| Command | Purpose |
 | --- | --- |
-| 启动开发服务器（HMR） | `npm run dev` → http://localhost:3000 |
-| 生产构建 | `npm run build` |
-| 启动生产服务器 | `npm run start` |
-| 类型检查 | `npm run typecheck`（`tsc --noEmit`） |
+| `npm ci` | Install dependencies from the lockfile |
+| `npm run dev` | Start the development server |
+| `npm run build` | Build the production application |
+| `npm run start` | Serve a completed production build |
+| `npm run typecheck` | Run `tsc --noEmit` |
+| `npm test` | Run unit and component tests |
+| `npm run test:watch` | Run Vitest in watch mode |
+| `npm run test:coverage` | Run tests with V8 coverage gates |
+| `npm run test:e2e:install` | Install Chromium for Playwright |
+| `npm run test:e2e` | Run the cross-service browser tests |
 
-仓库根目录的快捷方式：
+## Routes and Streaming
 
-| 命令 | 说明 |
-| --- | --- |
-| `make dev` / `make up` | 通过 Compose 启动开发栈，前端容器挂载源码 + 启用 `WATCHPACK_POLLING` |
-| `make typecheck` | `exec` 进 `frontend-dev` 容器执行 `npm run typecheck` |
-| `make logs SERVICE=frontend-dev` | 查看开发前端日志 |
-| `make smoke` | HTTP 探活（`/`、`/api/query` 校验） |
-
-## 自动化测试
-
-```sh
-npm test                               # Vitest：聊天组件、SSE、API 代理
-npm test -- tests/query.test.ts         # 指定文件
-npm run test:watch                      # 监听模式
-npm run test:coverage                   # coverage/index.html / lcov.info
-npm run test:e2e:install                # 首次下载 Chromium
-npm run test:e2e                        # 跨端 Playwright（也需后端 uv 依赖）
-```
-
-组件测试使用 Testing Library + jsdom；SSE/代理测试使用 Node 的 Web Streams。测试自动恢复 Mock、环境变量及 DOM。跨端测试自动管理 3100/8100 上的独立服务，覆盖浏览器到真实后端 Agent 的链路，外部模型/检索服务使用确定性替身。
-
-根目录 `make test-install` 完成安装，`make test` 一键运行全部测试，`make test-coverage` 执行覆盖率门禁。配置在 `vitest.config.mts`、`playwright.config.ts`；用例在 `tests/` 及根 `tests/e2e/`。详细隔离/CI/风险见 [../docs/TESTING.md](../docs/TESTING.md)。
-
-## 路由
-
-| 路径 | 文件 | 说明 |
+| Route | Source | Behavior |
 | --- | --- | --- |
-| `/` | `src/app/page.tsx` | 渲染 `<ChatPage />`，整个聊天界面 |
-| `/api/query` | `src/app/api/query/route.ts` | `POST` → SSE 转发到 `${API_BASE_URL ?? "http://localhost:8000"}/api/query`；运行时 `nodejs` |
+| `/` | `src/app/page.tsx` | Server component rendering the client `ChatPage` |
+| `POST /api/query` | `src/app/api/query/route.ts` | Node.js route forwarding JSON to the backend and streaming its response |
 
-`/api/query` 路由仅做 SSE 透传：
+The browser sends `{ "query": "..." }` to the relative `/api/query` route. The proxy forwards the body and request cancellation signal to `${API_BASE_URL}/api/query`, preserves the upstream status and content type, and passes through the response stream. It disables caching and returns `502 { "message": "后端服务不可用" }` on connection failure.
 
-- 透传上游 `response.body`（保持 chunked 编码），不要 buffer；
-- 透传 `Content-Type`（默认 `text/event-stream; charset=utf-8`）；
-- 设置 `Cache-Control: no-cache, no-transform`；
-- 透传 `signal: request.signal`，客户端断开即中止上游；
-- 网络异常返回 `502 { "message": "后端服务不可用" }`。
+`src/services/query.ts` exposes `queryStream(query)`, an async generator. It incrementally decodes UTF-8, retains incomplete frames across chunks, accepts LF or CRLF frame separators, and parses one `data:` line per frame. Malformed JSON and payloads outside the event contract are ignored. HTTP failures or a missing response stream throw an error; ending iteration early cancels the reader.
 
-## 环境变量
+| Event | Payload | UI behavior |
+| --- | --- | --- |
+| `progress` | `step: string`, `status: "running" \| "success" \| "error"` | Update the named step in the current query's progress bubble |
+| `result` | `data: Record<string, unknown>[]` | Append a table; column names come from the first row |
+| `error` | `message?: string` | Append an error bubble, with a fallback message |
 
-| 变量 | 作用范围 | 默认 | 说明 |
-| --- | --- | --- | --- |
-| `API_BASE_URL` | 服务端（路由处理器内） | `http://localhost:8000` | 转发到后端的基础 URL。两个 Compose profile 中均设为 `http://backend:8000` |
-| `NODE_ENV` | 服务端 | — | `Dockerfile` 的 `dev` target 设为 `development` |
-| `WATCHPACK_POLLING` | `dev` profile | `"true"` | 启用 Webpack 文件轮询，便于在挂载卷上做 HMR |
+See [the backend API contract](../backend/README.md#api) for server validation and serialization.
 
-目前没有使用 `NEXT_PUBLIC_*` 变量，因此不会暴露到客户端 bundle。
+## Environment
 
-## 源码结构
+| Variable | Usage | Default / Compose value |
+| --- | --- | --- |
+| `API_BASE_URL` | Server-side backend URL, read by the route handler | `http://localhost:8000` / `http://backend:8000` |
+| `WATCHPACK_POLLING` | Set by Compose for the development frontend | `true` in `frontend-dev` |
+| `NODE_ENV` | Set by the Docker build targets | `development` / `production` |
 
-```
+The application uses no `NEXT_PUBLIC_*` variables. Configure the backend address on the Next.js server; the browser always calls the relative route.
+
+## Source Structure
+
+```text
 frontend/
 ├── src/
 │   ├── app/
-│   │   ├── layout.tsx                # <html lang="zh-CN"> + 全局样式；metadata.title = "掌柜问数"
-│   │   ├── page.tsx                  # 渲染 <ChatPage />（服务端组件）
-│   │   └── api/query/route.ts        # POST SSE 转发（runtime = "nodejs"）
-│   ├── features/chat/
-│   │   └── ChatPage.tsx              # "use client"，聊天交互与消息状态
-│   ├── services/
-│   │   └── query.ts                  # queryStream(query) — SSE 异步生成器
-│   ├── styles/
-│   │   └── style.css                 # 全局样式（CSS 变量 + 布局）
-│   └── types/
-│       └── query.ts                  # QueryEvent、ChatMessage、StepStatus
-├── Dockerfile                        # 多阶段镜像：dev 与 production targets
-├── next.config.ts                    # output: "standalone"
-├── package.json
-├── tsconfig.json                     # strict, noEmit, jsx: "react-jsx"
-└── README.md
+│   │   ├── layout.tsx          # zh-CN document, title, and global stylesheet
+│   │   ├── page.tsx            # Chat page entry
+│   │   └── api/query/route.ts  # Backend SSE proxy
+│   ├── features/chat/ChatPage.tsx
+│   ├── services/query.ts      # SSE parsing and event validation
+│   ├── styles/style.css       # Chat layout and table styles
+│   └── types/query.ts         # Events and discriminated message types
+├── tests/                     # Component, SSE parser, and proxy tests
+├── Dockerfile                 # dependencies, dev, build, production stages
+├── next.config.ts             # Standalone output
+├── playwright.config.ts       # Root E2E suite and isolated test servers
+├── vitest.config.mts          # Unit tests and coverage gates
+├── tsconfig.json
+└── package.json
 ```
 
-### 关键文件
+## Tests
 
-- `src/features/chat/ChatPage.tsx` — 唯一客户端组件。`busy` ref 防止重复提交；`Enter` 键触发发送；`useEffect([messages])` 自动滚动到底部。
-- `src/services/query.ts` — `queryStream(query)`：`fetch('/api/query')` → `getReader()` → 按 `\r?\n\r?\n` 切分事件 → 取 `data:` 行解析 `JSON`。解析失败的行静默忽略。
-- `src/types/query.ts` — 与后端 SSE 契约保持一致：
-  - `QueryEvent` = `{type: "progress", step, status}` | `{type: "result", data}` | `{type: "error", message}`
-  - `ChatMessage` 是按 `message.type` 判别的联合类型：`text` / `steps` / `table` / `error`。
-- `src/styles/style.css` — 唯一样式来源。常用 class：`.chat-page`、`.message-row`、`.bubble`、`.avatar`、`.steps`、`.step`、`.dot`、`.table-wrap`、`.result-table`、`.input-wrapper`、`.input-box`、`.error-text`。
+Vitest uses Node for service/proxy tests and jsdom for the chat component tests. Fetch, environment, and DOM state are isolated between tests. Coverage requires 85% for lines, statements, and functions, and 80% for branches in the configured source scopes.
 
-## 请求流
+```bash
+npm test -- tests/query.test.ts
+npm run test:coverage
+```
 
-1. 用户在 `ChatPage` 输入问题，回车或点击「发送」。新消息被追加为 `user` 文本气泡，并插入一个 `assistant` 占位气泡（`type: "steps"`）。
-2. `queryStream(query)` POST `{ query }` 到相对路径 `/api/query`，读取 `response.body` 的 `getReader()`，按事件切分并 yield `QueryEvent`。
-3. Next.js 路由处理器把请求转发到 `${API_BASE_URL ?? "http://localhost:8000"}/api/query`，透传 headers / status / body。`cache: "no-store"` 和 `signal: request.signal` 保留客户端断连。
-4. `ChatPage` 根据事件类型更新气泡：
-   - `progress` → 找到同名步骤，更新状态（`running` / `success` / `error`）；
-   - `result` → 追加新的 `table` 气泡（`columns = Object.keys(data[0])`）；
-   - `error` → 追加 `error` 气泡。
+Playwright runs [../tests/e2e/](../tests/e2e/) with Chromium and starts its own Next.js server on `127.0.0.1:3100` and FastAPI test server on `127.0.0.1:8100`. Install the backend dependencies with `uv sync --frozen` from `backend/` first, then install Chromium and run `npm run test:e2e`. Alternatively, root `make test-install` prepares both modules and Chromium, and `make test` runs every layer.
 
-## 开发注意事项
+E2E exercises the browser, proxy, real agent graph, and in-memory SQL execution with deterministic model/retrieval substitutes. Servers are not reused. Avoid running E2E alongside another Next.js process or build that writes `frontend/.next`. Reports are written to `coverage/`, `playwright-report/`, and `test-results/`.
 
-- `tsconfig.json` 启用了 `strict` + `noEmit`，类型错误会直接阻塞 `tsc --noEmit` 与 `npm run build`。`.next/types/**/*.ts` 与 `.next/dev/types/**/*.ts` 是 Next.js 生成的类型文件，已被 git 忽略。
-- `next.config.ts` 目前只有 `output: "standalone"`，`Dockerfile` 的 `production` target 依赖 `.next/standalone/server.js`；修改此配置前请阅读根 `AGENTS.md`。
-- 无路径别名；统一使用相对路径（`../../services/query` 等）。
-- 不要把 `response.body` 在路由处理器里 `await response.text()` —— SSE 必须流式透传。
-- 修改 `src/types/query.ts` 时同步检查后端 `backend/app/services/query_service.py` 与 `backend/app/agent/nodes/*.py`。
+## Development Notes
 
-## 与 Compose 的集成
+- `ChatPage` prevents concurrent submissions, ignores Enter during Chinese input composition, and scrolls as messages arrive. Message history lives in React state.
+- Keep `src/types/query.ts` and the parser aligned with backend events. Result cells stringify values; null cells display as empty strings.
+- Preserve streaming body passthrough in the proxy and its `nodejs` runtime.
+- Keep `output: "standalone"` in `next.config.ts`: the production Docker stage runs the generated `server.js` and copies `.next/static`.
+- Compose's `frontend-dev` mounts source at `/app` with separate anonymous volumes for `node_modules` and `.next`. Root `make typecheck` requires that container to be running.
+- TypeScript includes generated `.next/types` and `.next/dev/types`. `next-env.d.ts` is generated by Next.js.
 
-`docker-compose.yml` 通过同一个 `frontend/Dockerfile` 的不同 target 配置两种前端：
+## Related Documentation
 
-- `prod` profile 的 `frontend` 构建 `production` target（standalone 镜像），从容器内 `:3000` 通过端口映射暴露到宿主机 `:8080`；
-- `dev` profile 的 `frontend-dev` 构建 `dev` target，运行 `npm run dev -- --hostname 0.0.0.0`，同样映射到宿主机 `:8080`。
-
-开发前端配置：
-
-- 使用 `frontend/Dockerfile` 的 `dev` target；
-- 启动命令 `npm run dev -- --hostname 0.0.0.0`；
-- `dev` target 设置 `NODE_ENV=development`，Compose 设置 `WATCHPACK_POLLING=true`；
-- 挂载 `./frontend:/app`（匿名卷覆盖 `node_modules` 与 `.next`，避免宿主机与容器依赖冲突）。
-
-## 相关文档
-
-- [frontend/AGENTS.md](AGENTS.md) — 编码 Agent 协作的详细指南
-- [../README.md](../README.md) — 项目入口
-- [../AGENTS.md](../AGENTS.md) — 仓库级 Agent 指南
-- [../backend/README.md](../backend/README.md) — 后端文档
+- [Project overview](../README.md) / [中文概览](../README_zh.md)
+- [Backend guide](../backend/README.md)
+- [Frontend agent guidance](AGENTS.md)
