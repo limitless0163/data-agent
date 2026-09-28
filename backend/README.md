@@ -14,7 +14,7 @@ Python 3.11 + FastAPI 实现的自然语言查询后端。核心是一个 LangGr
 | LLM | DeepSeek（`langchain-deepseek` / `ChatOpenAI` 指向 `https://api.deepseek.com`，模型 `deepseek-flash`） |
 | 向量模型 | `BAAI/bge-large-zh-v1.5`（通过 HuggingFace `text-embeddings-inference`，dim 1024） |
 | 配置 | OmegaConf 合并 dataclass schema + YAML + 环境变量 |
-| 日志 | loguru（`app/core/log.py`），每个请求通过 `request_id` ContextVar 注入 |
+| 日志 | loguru（`app/core/log.py`），每个请求通过 `request_id` ContextVar 注入；Compose 将文件日志存入 Docker named volume `backend_logs`，控制台日志可用 `make logs SERVICE=backend` 查看 |
 
 ## 先决条件
 

@@ -65,6 +65,7 @@ services:
       DATA_AGENT_ES_PORT: "9200"
     volumes:
       - knowledge_state:/state
+      - backend_logs:/app/logs
     depends_on:
       - mysql
       - elasticsearch
@@ -81,6 +82,8 @@ services:
       dockerfile: Dockerfile
     restart: unless-stopped
     environment: *backend-environment
+    volumes:
+      - backend_logs:/app/logs
     expose:
       - "8000"
     depends_on:
@@ -128,3 +131,4 @@ volumes:
   qdrant_data:
   embedding_model_cache:
   knowledge_state:
+  backend_logs:

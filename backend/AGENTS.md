@@ -15,7 +15,7 @@ For repo-wide orientation (Compose topology, env vars, Make targets), see [AGENT
 - LLM: **DeepSeek** (`langchain-deepseek` exposed as a `ChatOpenAI` against `https://api.deepseek.com`; model `deepseek-flash`; `extra_body={"thinking": {"type": "disabled"}}`).
 - Embeddings: **`HuggingFaceEndpointEmbeddings`** pointed at the `embeddings` container (the local `text-embeddings-inference` server, model `BAAI/bge-large-zh-v1.5`, dim 1024).
 - Agent runtime: **langgraph** (`StateGraph`).
-- Logging: **loguru** with per-request `request_id` (`app.core.context` + `app.core.log`).
+- Logging: **loguru** with per-request `request_id` (`app.core.context` + `app.core.log`). Compose stores file logs in the Docker named volume `backend_logs` mounted at `/app/logs`; do not bind-mount them into the repository.
 - Config: **OmegaConf** (`app.core.config.app_config`) merging a typed dataclass schema with YAML, then env-var overrides.
 
 ## Commands
