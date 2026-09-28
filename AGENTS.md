@@ -68,7 +68,7 @@ For native iteration, see `backend/AGENTS.md` (uvicorn, `uv sync`) and `frontend
 ## Setup (first run)
 
 1. `cp .env.example .env` and set `DEEPSEEK_API_KEY`.
-2. Start Docker Desktop.
+2. On macOS, `make dev` opens Docker Desktop if its daemon is not running and waits for it to become ready. On other platforms, start Docker Engine first.
 3. `make dev` — first run pulls images, downloads the BGE model (~hundreds of MB), and waits for `knowledge-init` to build the meta knowledge base from `backend/app/core/config/meta_config.yaml`. Watch with `make ps` / `make logs`.
 4. Open http://localhost:8080.
 

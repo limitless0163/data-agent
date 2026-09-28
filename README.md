@@ -80,7 +80,7 @@ cp .env.example .env
 # 编辑 .env，填入 DEEPSEEK_API_KEY；其它变量使用默认值即可
 ```
 
-启动 Docker Desktop。
+`make dev` 和 `make prod` 会先检查 Docker daemon。macOS 上如果 Docker Desktop 尚未运行，命令会自动打开它并等待就绪；其它系统请先启动 Docker daemon。
 
 ### 2. 启动开发栈
 
