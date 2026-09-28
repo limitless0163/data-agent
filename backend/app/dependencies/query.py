@@ -1,5 +1,9 @@
 from typing import Annotated
 
+from fastapi import Depends
+from langchain_huggingface import HuggingFaceEndpointEmbeddings
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.core.clients.embedding_client_manager import embedding_client_manager
 from app.db.es_client_manager import es_client_manager
 from app.db.mysql_client_manager import (
@@ -13,9 +17,6 @@ from app.repositories.mysql.meta.meta_mysql_repository import MetaMySQLRepositor
 from app.repositories.qdrant.column_qdrant_repository import ColumnQdrantRepository
 from app.repositories.qdrant.metric_qdrant_repository import MetricQdrantRepository
 from app.services.query_service import QueryService
-from fastapi import Depends
-from langchain_huggingface import HuggingFaceEndpointEmbeddings
-from sqlalchemy.ext.asyncio import AsyncSession
 
 
 async def get_meta_session():

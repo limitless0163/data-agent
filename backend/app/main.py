@@ -1,9 +1,10 @@
 import uuid
 
+from fastapi import FastAPI, Request
+
 from app.api.routers.query_router import query_router
 from app.core.context import request_id_ctx_var
 from app.core.lifespan import lifespan
-from fastapi import FastAPI, Request
 
 # 创建FastAPI应用，并注册生命周期函数
 app = FastAPI(lifespan=lifespan)

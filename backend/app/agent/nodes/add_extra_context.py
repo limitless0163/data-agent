@@ -1,9 +1,10 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
+
+from langgraph.runtime import Runtime
 
 from app.agent.context import DataAgentContext
 from app.agent.state import DataAgentState, DateInfoState
 from app.core.log import logger
-from langgraph.runtime import Runtime
 
 
 async def add_extra_context(state: DataAgentState, runtime: Runtime[DataAgentContext]):
@@ -13,7 +14,7 @@ async def add_extra_context(state: DataAgentState, runtime: Runtime[DataAgentCon
     dw_mysql_repository = runtime.context["dw_mysql_repository"]
 
     try:
-        today = datetime.now(tz=timezone.utc).astimezone()  # 当前的时间信息
+        today = datetime.now(tz=UTC).astimezone()  # 当前的时间信息
         date = today.strftime("%Y-%m-%d")  # 日期
         weekday = today.strftime("%A")  # 星期
         quarter = f"Q{(today.month - 1) // 3 + 1}"  # 季度

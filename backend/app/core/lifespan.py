@@ -1,5 +1,7 @@
 from contextlib import asynccontextmanager
 
+from fastapi import FastAPI
+
 from app.core.clients.embedding_client_manager import embedding_client_manager
 from app.db.es_client_manager import es_client_manager
 from app.db.mysql_client_manager import (
@@ -7,7 +9,6 @@ from app.db.mysql_client_manager import (
     meta_mysql_client_manager,
 )
 from app.db.qdrant_client_manager import qdrant_client_manager
-from fastapi import FastAPI
 
 
 @asynccontextmanager

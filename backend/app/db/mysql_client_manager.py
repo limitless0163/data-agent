@@ -1,5 +1,6 @@
-from app.core.config.app_config import DBConfig, app_config
 from sqlalchemy.ext.asyncio import AsyncEngine, async_sessionmaker, create_async_engine
+
+from app.core.config.app_config import DBConfig, app_config
 
 
 class MysqlClientManager:

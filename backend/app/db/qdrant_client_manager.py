@@ -1,5 +1,6 @@
-from app.core.config.app_config import QdrantConfig, app_config
 from qdrant_client import AsyncQdrantClient
+
+from app.core.config.app_config import QdrantConfig, app_config
 
 
 class QdrantClientManager:

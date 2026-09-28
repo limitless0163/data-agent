@@ -1,8 +1,9 @@
 from dataclasses import asdict
 from typing import Any, ClassVar
 
-from app.entities.value_info import ValueInfo
 from elasticsearch import AsyncElasticsearch
+
+from app.entities.value_info import ValueInfo
 
 
 class ValueESRepository:

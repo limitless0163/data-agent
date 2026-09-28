@@ -1,10 +1,11 @@
 from typing import Annotated
 
+from fastapi import APIRouter, Depends
+from starlette.responses import StreamingResponse
+
 from app.dependencies.query import get_query_service
 from app.schemas.query_schema import QuerySchema
 from app.services.query_service import QueryService
-from fastapi import APIRouter, Depends
-from starlette.responses import StreamingResponse
 
 query_router = APIRouter()
 

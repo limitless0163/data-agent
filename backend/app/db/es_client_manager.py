@@ -1,5 +1,6 @@
-from app.core.config.app_config import ESConfig, app_config
 from elasticsearch import AsyncElasticsearch
+
+from app.core.config.app_config import ESConfig, app_config
 
 
 class ESClientManager:

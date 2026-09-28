@@ -2,6 +2,9 @@ import uuid
 from decimal import Decimal
 from pathlib import Path
 
+from langchain_huggingface import HuggingFaceEndpointEmbeddings
+from omegaconf import OmegaConf
+
 from app.core.config.meta_config import MetaConfig
 from app.core.log import logger
 from app.entities.column_info import ColumnInfo
@@ -14,8 +17,6 @@ from app.repositories.mysql.dw.dw_mysql_repository import DWMySQLRepository
 from app.repositories.mysql.meta.meta_mysql_repository import MetaMySQLRepository
 from app.repositories.qdrant.column_qdrant_repository import ColumnQdrantRepository
 from app.repositories.qdrant.metric_qdrant_repository import MetricQdrantRepository
-from langchain_huggingface import HuggingFaceEndpointEmbeddings
-from omegaconf import OmegaConf
 
 
 class MetaKnowledgeService:

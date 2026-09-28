@@ -1,9 +1,10 @@
 import sys
 from pathlib import Path
 
+from loguru import logger
+
 from app.core.config.app_config import app_config
 from app.core.context import request_id_ctx_var
-from loguru import logger
 
 # 配置日志格式
 log_format = (

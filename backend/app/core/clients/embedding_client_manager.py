@@ -1,5 +1,6 @@
-from app.core.config.app_config import EmbeddingConfig, app_config
 from langchain_huggingface import HuggingFaceEndpointEmbeddings
+
+from app.core.config.app_config import EmbeddingConfig, app_config
 
 
 class EmbeddingClientManager:

@@ -1,3 +1,6 @@
+from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from app.entities.column_info import ColumnInfo
 from app.entities.column_metric import ColumnMetric
 from app.entities.metric_info import MetricInfo
@@ -8,8 +11,6 @@ from app.repositories.mysql.meta.mappers.column_info_mapper import ColumnInfoMap
 from app.repositories.mysql.meta.mappers.column_metric_mapper import ColumnMetricMapper
 from app.repositories.mysql.meta.mappers.metric_info_mapper import MetricInfoMapper
 from app.repositories.mysql.meta.mappers.table_info_mapper import TableInfoMapper
-from sqlalchemy import text
-from sqlalchemy.ext.asyncio import AsyncSession
 
 
 class MetaMySQLRepository:

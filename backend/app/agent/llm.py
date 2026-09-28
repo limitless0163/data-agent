@@ -1,7 +1,8 @@
 from functools import lru_cache
 
-from app.core.config.app_config import app_config
 from langchain.chat_models import init_chat_model
+
+from app.core.config.app_config import app_config
 
 
 @lru_cache(maxsize=1)
