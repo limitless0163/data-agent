@@ -12,6 +12,7 @@ function isQueryEvent(value: unknown): value is QueryEvent {
   return event.type === "error" && (event.message === undefined || typeof event.message === "string");
 }
 
+/** 逐帧返回有效查询事件；仅处理后端约定的单行 data 载荷。 */
 export async function* queryStream(query: string): AsyncGenerator<QueryEvent> {
   const response = await fetch("/api/query", {
     method: "POST",
@@ -31,6 +32,7 @@ export async function* queryStream(query: string): AsyncGenerator<QueryEvent> {
     while (true) {
       const { value, done } = await reader.read();
       completed = done;
+      // 字节块可能截断中文字符或事件；增量解码并保留未完成的帧。
       buffer += decoder.decode(value, { stream: !done });
       const events = buffer.split(/\r?\n\r?\n/);
       buffer = events.pop() ?? "";
@@ -42,13 +44,14 @@ export async function* queryStream(query: string): AsyncGenerator<QueryEvent> {
           const parsed: unknown = JSON.parse(data.slice(5).trim());
           if (isQueryEvent(parsed)) yield parsed;
         } catch {
-          // Ignore malformed events and keep reading the stream.
+          // 单帧 JSON 损坏不影响后续进度和结果事件。
         }
       }
       if (done) break;
     }
   } finally {
     try {
+      // 调用方提前停止迭代时取消读取，释放仍在传输的响应流。
       if (!completed) await reader.cancel();
     } finally {
       reader.releaseLock();

@@ -12,7 +12,7 @@ async def extract_keywords(state: DataAgentState, runtime: Runtime[DataAgentCont
 
     query = state["query"]
 
-    # 对查询进行分词，只提取指定词性的词
+    # 保留有助于定位业务实体、指标及取值的词性，减少虚词带来的召回噪声。
     allow_pos = (
         "n",  # 名词: 数据、服务器、表格
         "nr",  # 人名: 张三、李四
@@ -30,6 +30,7 @@ async def extract_keywords(state: DataAgentState, runtime: Runtime[DataAgentCont
 
     keywords = jieba.analyse.extract_tags(query, allowPOS=allow_pos)
 
+    # 同时检索完整问题，保留分词可能丢失的语义。
     keywords = list(set(keywords + [query]))
 
     writer({"type": "progress", "step": "抽取关键字", "status": "success"})

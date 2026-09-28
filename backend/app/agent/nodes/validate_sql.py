@@ -20,6 +20,7 @@ async def validate_sql(state: DataAgentState, runtime: Runtime[DataAgentContext]
         logger.info(f"SQL验证成功: {sql}")
         return {"error": None}
 
+    # 数据库校验失败交给校正节点；其他异常仍向外传播并终止流程。
     except SQLAlchemyError as e:
         writer({"type": "progress", "step": "验证SQL", "status": "error"})
         logger.error(f"SQL验证失败: {sql}")

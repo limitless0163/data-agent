@@ -10,6 +10,7 @@ export default function ChatPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const messagesEl = useRef<HTMLDivElement>(null);
   const nextId = useRef(0);
+  // 同步标记阻止 React 状态更新生效前的重复提交。
   const busy = useRef(false);
 
   useEffect(() => {
@@ -37,6 +38,7 @@ export default function ChatPage() {
         if (event.type === "progress") {
           setMessages((current) => current.map((message) => {
             if (message.id !== stepId || message.type !== "steps") return message;
+            // 后端以步骤名称关联状态更新，始终更新本次查询的步骤消息。
             const exists = message.steps.some((step) => step.text === event.step);
             return {
               ...message,
@@ -108,6 +110,7 @@ export default function ChatPage() {
       </div>
       <div className="input-wrapper">
         <div className="input-box">
+          {/* 输入法确认候选词时的回车不应触发发送。 */}
           <input value={question} onChange={(event) => setQuestion(event.target.value)}
             onKeyDown={(event) => { if (event.key === "Enter" && !event.nativeEvent.isComposing && event.keyCode !== 229) void sendQuestion(); }}
             placeholder="请输入你的问题..." aria-label="请输入你的问题" />

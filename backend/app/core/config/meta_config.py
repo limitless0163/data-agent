@@ -7,7 +7,7 @@ class ColumnConfig:
     role: str
     description: str
     alias: list[str]
-    sync: bool
+    sync: bool  # 是否将该列的实际取值同步到全文索引
 
 
 @dataclass
@@ -22,7 +22,7 @@ class TableConfig:
 class MetricConfig:
     name: str
     description: str
-    relevant_columns: list[str]
+    relevant_columns: list[str]  # 依赖字段的完整 ID，格式为“表名.字段名”
     alias: list[str]
 
 

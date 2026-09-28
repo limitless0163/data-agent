@@ -47,6 +47,7 @@ class ValueESRepository:
     async def search(
         self, keyword: str, score_threshold: float = 0.6, limit: int = 5
     ) -> list[ValueInfo]:
+        """全文检索字段取值；阈值为 ES 相关性分数下限，与向量相似度不同。"""
         result = await self.client.search(
             index=self.index_name,
             query={"match": {"value": keyword}},

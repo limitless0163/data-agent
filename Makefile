@@ -89,7 +89,7 @@ typecheck:
 build:
 	$(PROD_COMPOSE) build
 
-# Native hermetic tests: no Compose, .env or production services required.
+# 原生隔离测试，不依赖 Compose、.env 或生产服务。
 test-install:
 	cd backend && uv sync --frozen
 	cd frontend && npm ci

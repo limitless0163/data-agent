@@ -6,7 +6,6 @@ from dotenv import load_dotenv
 from omegaconf import OmegaConf
 
 
-# 日志配置
 @dataclass
 class File:
     enable: bool
@@ -28,7 +27,6 @@ class LoggingConfig:
     console: Console
 
 
-# 数据库配置
 @dataclass
 class DBConfig:
     host: str
@@ -78,13 +76,15 @@ class AppConfig:
 
 
 def _load_app_config() -> AppConfig:
+    """按结构化配置校验 YAML，并以环境变量覆盖运行时设置。"""
     project_root = Path(__file__).resolve().parents[4]
+    # 已有环境变量优先于 .env，部署注入的配置不会被本地文件覆盖。
     load_dotenv(project_root / ".env", override=False)
 
     config_file = Path(__file__).with_name("app_config.yaml")
     context = OmegaConf.load(config_file)
 
-    # 容器部署时通过环境变量配置 Compose 服务名和运行时密钥；本地开发仍可使用仓库中的 YAML 默认配置。
+    # 未提供环境变量时保留 YAML 默认值。
     env_overrides = {
         "db_meta.host": ("DATA_AGENT_DB_META_HOST", str),
         "db_meta.port": ("DATA_AGENT_DB_META_PORT", int),

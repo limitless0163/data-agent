@@ -40,7 +40,7 @@ CREATE TABLE IF NOT EXISTS column_metric (
     PRIMARY KEY (column_id, metric_id)
 ) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;
 
--- Imported warehouse schema and data from the project source dataset.
+-- 以下为项目源数据集中的数据仓库结构与种子数据。
 CREATE DATABASE IF NOT EXISTS dw DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci;
 GRANT ALL PRIVILEGES ON dw.* TO 'atguigu'@'%';
 USE dw;

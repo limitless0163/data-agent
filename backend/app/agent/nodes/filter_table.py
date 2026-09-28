@@ -18,7 +18,6 @@ async def filter_table(state: DataAgentState, runtime: Runtime[DataAgentContext]
     table_infos = state["table_infos"]
 
     try:
-        # 用LLM过滤表信息
         prompt = PromptTemplate(
             template=load_prompt("filter_table_info"),
             input_variables=["query", "table_infos"],
@@ -37,6 +36,7 @@ async def filter_table(state: DataAgentState, runtime: Runtime[DataAgentContext]
             }
         )
 
+        # 表和字段均遍历副本，避免原地删除时跳过候选项。
         for table_info in table_infos[:]:
             if table_info["name"] not in result:
                 table_infos.remove(table_info)

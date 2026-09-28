@@ -14,6 +14,8 @@ from app.repositories.mysql.meta.mappers.table_info_mapper import TableInfoMappe
 
 
 class MetaMySQLRepository:
+    """读写元数据；保存方法仅加入会话，事务提交由调用方负责。"""
+
     def __init__(self, session: AsyncSession):
         self.session = session
 

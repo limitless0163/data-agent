@@ -1,4 +1,4 @@
-"""Configure isolated test processes before application imports."""
+"""在导入应用前隔离测试配置，禁用真实密钥、日志落盘及本地环境加载。"""
 
 import os
 from contextlib import contextmanager

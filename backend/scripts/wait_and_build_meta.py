@@ -11,6 +11,7 @@ from app.core.log import logger
 
 
 async def mysql_ready() -> bool:
+    """确认订单种子数据已导入，避免仅端口就绪时就开始构建知识库。"""
     connection = await asyncmy.connect(
         host=os.getenv("DATA_AGENT_DB_META_HOST", "mysql"),
         port=int(os.getenv("DATA_AGENT_DB_META_PORT", "3306")),
@@ -36,7 +37,7 @@ async def dependency_status(client: httpx.AsyncClient) -> dict[str, bool]:
     }
     try:
         results["mysql"] = await mysql_ready()
-    except Exception as e:  # noqa: BLE001 -- Any connection failure means MySQL is not ready yet.
+    except Exception as e:  # noqa: BLE001 -- 连接或查询失败均视为 MySQL 尚未就绪，继续轮询。
         logger.debug(f"MySQL dependency is not ready: {e!s}")
 
     endpoints = {
@@ -54,6 +55,7 @@ async def dependency_status(client: httpx.AsyncClient) -> dict[str, bool]:
 
 
 async def wait_until_ready() -> None:
+    """等待数据库、索引服务及向量模型就绪，最多轮询十五分钟。"""
     deadline = time.monotonic() + 900
     async with httpx.AsyncClient(timeout=4) as client:
         while time.monotonic() < deadline:

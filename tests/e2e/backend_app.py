@@ -1,4 +1,4 @@
-"""Test-only ASGI entrypoint. Never add test switches to the production application."""
+"""仅供 E2E 使用的 ASGI 入口；测试依赖覆盖集中于此，避免侵入生产应用。"""
 
 import os
 import socket
@@ -56,12 +56,12 @@ async def test_lifespan(_app):
 
 class TestDWRepository(DWMySQLRepository):
     async def get_db_info(self):
-        # Prompts target MySQL; SQL exercised here uses the common SQL subset.
+        # 保持提示词的 MySQL 方言；测试仅执行与 SQLite 兼容的 SQL 子集。
         return {"dialect": "mysql", "version": "8.4"}
 
 
 async def test_query_service():
-    # Each request owns a new, disposable DB; no global fixture state or live DB URLs.
+    # 每次请求创建独立的内存数据库，避免测试间共享状态或连接真实数据库。
     engine = create_async_engine("sqlite+aiosqlite:///:memory:")
     try:
         async with engine.begin() as connection:

@@ -1,4 +1,4 @@
-"""Pytest isolation is installed before test collection imports the application."""
+"""在 pytest 收集测试并导入应用前启用隔离配置。"""
 
 import socket
 from types import SimpleNamespace
@@ -36,7 +36,7 @@ def isolated_test(monkeypatch):
 
 @pytest.fixture
 async def qdrant_client():
-    # Async resources must close on the same per-test event loop.
+    # 异步资源须在创建它的测试事件循环内关闭。
     from qdrant_client import AsyncQdrantClient
 
     client = AsyncQdrantClient(":memory:")
@@ -64,7 +64,7 @@ def api_client(api_state, mocker, monkeypatch):
             api_state.request_ids.append(str(request_id_ctx_var.get()))
             yield 'data: {"type":"result","data":[]}\n\n'
 
-    # Run the production lifespan through TestClient while replacing external clients.
+    # 替换外部客户端，但仍通过 TestClient 验证真实生命周期。
     managers = {}
     for name in (
         "embedding_client_manager",

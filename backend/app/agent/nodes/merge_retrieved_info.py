@@ -15,26 +15,24 @@ from app.entities.table_info import TableInfo
 async def merge_retrieved_info(
     state: DataAgentState, runtime: Runtime[DataAgentContext]
 ):
+    """按字段 ID 合并三路召回，补齐指标依赖、取值示例和表关联键。"""
     writer = runtime.stream_writer
     writer({"type": "progress", "step": "合并召回信息", "status": "running"})
 
-    # 已召回信息
     retrieved_columns = state["retrieved_columns"]
     retrieved_values = state["retrieved_values"]
     retrieved_metrics = state["retrieved_metrics"]
 
-    # 获取所需依赖
     meta_mysql_repository = runtime.context["meta_mysql_repository"]
 
     retrieved_columns_map: dict[str, ColumnInfo] = {
         retrieved_column.id: retrieved_column for retrieved_column in retrieved_columns
     }
 
-    # 合并表格信息
     table_infos: list[TableInfoState] = []
 
     try:
-        # 将指标信息的相关字段加入字段信息列表
+        # 指标依赖的字段可能未被语义检索命中，需从元数据库补齐。
         for retrieved_metric in retrieved_metrics:
             relevant_columns = retrieved_metric.relevant_columns
             for relevant_column in relevant_columns:
@@ -44,7 +42,7 @@ async def merge_retrieved_info(
                     )
                     retrieved_columns_map[relevant_column] = column_info
 
-        # 将字段取值合并到字段信息列表
+        # 把命中的实际取值补入示例，为 SQL 过滤条件提供候选值。
         for retrieved_value in retrieved_values:
             column_id = retrieved_value.column_id
             column_value = retrieved_value.value
@@ -57,7 +55,6 @@ async def merge_retrieved_info(
             if column_value not in retrieved_columns_map[column_id].examples:
                 retrieved_columns_map[column_id].examples.append(column_value)
 
-        # 按照字段所属的表id进行分组，得到table_id -> columns映射
         table_to_columns_map: dict[str, list[ColumnInfo]] = {}
         for column in retrieved_columns_map.values():
             table_id = column.table_id
@@ -65,21 +62,18 @@ async def merge_retrieved_info(
                 table_to_columns_map[table_id] = []
             table_to_columns_map[table_id].append(column)
 
-        # 显式的添加每个表的主外键
+        # 即使未被召回，也补齐主外键，为后续生成跨表关联提供依据。
         for table_id, columns in table_to_columns_map.items():
-            # 查询主外键字段
             key_columns: list[
                 ColumnInfo
             ] = await meta_mysql_repository.get_key_columns_by_table_id(table_id)
 
-            # 当前表已有的所有列的ID
             column_ids = [column.id for column in columns]
 
             for key_column in key_columns:
                 if key_column.id not in column_ids:
                     columns.append(key_column)
 
-        # 将table_id -> columns映射 转换为 list[TableInfoState]
         for table_id, columns in table_to_columns_map.items():
             table: TableInfo = await meta_mysql_repository.get_table_info_by_id(
                 table_id
@@ -104,7 +98,6 @@ async def merge_retrieved_info(
             )
             table_infos.append(table_info_state)
 
-        # 处理指标信息
         metric_infos: list[MetricInfoState] = [
             MetricInfoState(
                 name=metric_info.name,

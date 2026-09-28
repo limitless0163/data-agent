@@ -11,10 +11,13 @@ from app.repositories.mysql.meta.meta_mysql_repository import MetaMySQLRepositor
 from app.repositories.qdrant.column_qdrant_repository import ColumnQdrantRepository
 from app.repositories.qdrant.metric_qdrant_repository import MetricQdrantRepository
 
+# 复用编译后的图；每次查询单独创建状态和依赖上下文。
 graph = build_graph()
 
 
 class QueryService:
+    """执行问数流程，将节点事件编码为 SSE 数据帧。"""
+
     def __init__(
         self,
         embedding_client: HuggingFaceEndpointEmbeddings,
@@ -32,6 +35,7 @@ class QueryService:
         self.dw_mysql_repository = dw_mysql_repository
 
     async def query(self, query: str):
+        """逐帧返回进度、结果或错误；流开始后的异常通过错误事件传递。"""
         context = DataAgentContext(
             embedding_client=self.embedding_client,
             column_qdrant_repository=self.column_qdrant_repository,
@@ -45,6 +49,7 @@ class QueryService:
             async for chunk in graph.astream(
                 input=state, context=context, stream_mode="custom"
             ):
-                yield f"data: {json.dumps(chunk, ensure_ascii=False, default=str)}\n\n"  # SSE格式发送数据
-        except Exception as e:  # noqa: BLE001 -- Emit all graph failures using the SSE error contract.
+                # Decimal、日期等数据库值转为字符串，避免结果序列化中断流。
+                yield f"data: {json.dumps(chunk, ensure_ascii=False, default=str)}\n\n"
+        except Exception as e:  # noqa: BLE001 -- 将执行图异常统一转为 SSE 错误事件。
             yield f"data: {json.dumps({'type': 'error', 'message': str(e)}, ensure_ascii=False, default=str)}\n\n"

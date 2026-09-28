@@ -1,6 +1,6 @@
 # ARCHITECTURE_INSTRUCTIONS.md
 
-## 总项目参考架构
+## 总项目架构
 ```
 project/
 ├── backend/                # 后端
@@ -8,7 +8,6 @@ project/
 ├── frontend/               # 前端
 ├── infra/                  # 基础设施与部署
 ├── scripts/                # 项目辅助脚本
-├── shared/                 # OpenAPI 等共享协议
 ├── tests/                  # 系统级 / E2E / 跨服务测试
 ├── .dockerignore
 ├── .env.example
@@ -21,7 +20,7 @@ project/
 ```
 
 
-## 前端参考架构    TypeScript + React + Next.js
+## 前端架构    TypeScript + React + Next.js
 ```
 frontend/
 ├── public/                 # 图片、字体、图标等静态资源
@@ -31,12 +30,12 @@ frontend/
 │   ├── constants/          # 常量、枚举等
 │   ├── features/           # 按业务功能划分的模块
 │   ├── hooks/              # 自定义 React Hooks
-│   ├── lib/                # 第三方库封装、基础工具
+│   ├── lib/                # 第三方库封装、SDK/client
 │   ├── services/           # API 请求、后端服务调用
 │   ├── stores/             # 全局状态管理
 │   ├── styles/             # 全局样式与样式资源
 │   ├── types/              # TypeScript 类型定义
-│   └── utils/              # 通用工具函数
+│   └── utils/              # 纯工具函数
 │
 ├── tests/                  # 前端单元测试、组件测试
 ├── next.config.ts
@@ -48,7 +47,7 @@ frontend/
 ```
 
 
-## 后端参考架构      Python + FastAPI
+## 后端架构      Python + FastAPI
 ```
 backend/
 ├── app/                    # 后端核心源码
@@ -78,7 +77,7 @@ backend/
 ```
 
 
-## 测试参考架构
+## 测试架构
 ```
 Frontend
 ├── Vitest

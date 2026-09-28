@@ -6,7 +6,6 @@ from loguru import logger
 from app.core.config.app_config import app_config
 from app.core.context import request_id_ctx_var
 
-# 配置日志格式
 log_format = (
     "<green>{time:YYYY-MM-DD HH:mm:ss.SSS}</green> | "
     "<level>{level: <8}</level> | "
@@ -16,15 +15,14 @@ log_format = (
 )
 
 
-# 注入request_id到日志记录中
 def inject_request_id(record):
+    """从当前上下文读取请求标识，避免并发请求共用日志标识。"""
     request_id = request_id_ctx_var.get()
     record["extra"]["request_id"] = request_id
 
 
 logger.remove()
 
-# 给日志打补丁，使其支持注入request_id
 logger = logger.patch(inject_request_id)
 
 if app_config.logging.console.enable:

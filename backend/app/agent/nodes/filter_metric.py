@@ -18,7 +18,6 @@ async def filter_metric(state: DataAgentState, runtime: Runtime[DataAgentContext
     metric_infos = state["metric_infos"]
 
     try:
-        # 用LLM过滤表信息
         prompt = PromptTemplate(
             template=load_prompt("filter_metric_info"),
             input_variables=["query", "metric_infos"],
@@ -37,7 +36,7 @@ async def filter_metric(state: DataAgentState, runtime: Runtime[DataAgentContext
             }
         )
 
-        # 利用模型输出过滤metric_infos
+        # 遍历副本再删除原列表元素，避免连续删除时漏掉候选项。
         for metric_info in metric_infos[:]:
             if metric_info["name"] not in result:
                 metric_infos.remove(metric_info)

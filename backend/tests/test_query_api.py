@@ -99,7 +99,7 @@ def test_invalid_json_is_rejected_before_service_execution(api_client, api_state
 
 
 def test_current_string_contract_accepts_empty_query(api_client, api_state):
-    # Preserve the API's existing string-only contract without a new length policy.
+    # 只校验现有的字符串类型约定，不额外引入长度限制。
     response = api_client.post("/api/query", json={"query": ""})
     assert response.status_code == 200
     assert api_state.seen == [""]

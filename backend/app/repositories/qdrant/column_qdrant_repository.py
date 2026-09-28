@@ -29,6 +29,7 @@ class ColumnQdrantRepository:
         payloads: list[ColumnInfo],
         batch_size: int = 20,
     ):
+        """分批写入向量；三组列表须等长，且相同下标对应同一条记录。"""
         zipped = list(zip(ids, embeddings, payloads))
         for i in range(0, len(zipped), batch_size):
             batch = zipped[i : i + batch_size]
@@ -43,6 +44,7 @@ class ColumnQdrantRepository:
     async def search(
         self, embedding: list[float], score_threshold: float = 0.6, limit: int = 5
     ) -> list[ColumnInfo]:
+        """按余弦相似度返回候选字段；阈值为相似度下限，尚未按实体去重。"""
         result = await self.client.query_points(
             collection_name=self.collection_name,
             query=embedding,

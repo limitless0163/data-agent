@@ -23,7 +23,7 @@ def _route_after_validation(state: DataAgentState) -> str:
 
 
 def build_graph():
-    """构建并编译问数 Agent 的执行图。"""
+    """编译问数流程：并行召回和筛选，SQL 校验失败后只校正一次。"""
     graph_builder = StateGraph(
         state_schema=DataAgentState,
         context_schema=DataAgentContext,
@@ -62,6 +62,7 @@ def build_graph():
         {"execute_sql": "execute_sql", "correct_sql": "correct_sql"},
     )
 
+    # 校正后的 SQL 直接执行，不再进入校验或重试循环。
     graph_builder.add_edge("correct_sql", "execute_sql")
     graph_builder.add_edge("execute_sql", END)
 

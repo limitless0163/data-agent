@@ -40,6 +40,8 @@ class DBInfoState(TypedDict):
 
 
 class DataAgentState(TypedDict):
+    """单次查询的累积状态；节点仅返回更新字段，初始状态只有 query。"""
+
     query: str  # 用户查询
     keywords: list[str]  # 用户查询的关键字
 
@@ -53,5 +55,5 @@ class DataAgentState(TypedDict):
     date_info: DateInfoState  # 日期信息
     db_info: DBInfoState  # 数据库信息
 
-    sql: str  # 生成的SQL
-    error: str  # 验证SQL时的错误信息
+    sql: str  # 当前 SQL，校正节点会覆盖生成结果
+    error: str  # 校验成功时为 None，失败时为数据库错误文本

@@ -10,6 +10,8 @@ from app.repositories.qdrant.metric_qdrant_repository import MetricQdrantReposit
 
 
 class DataAgentContext(TypedDict):
+    """单次查询使用的外部依赖，与节点更新的业务状态分开传递。"""
+
     embedding_client: HuggingFaceEndpointEmbeddings
     column_qdrant_repository: ColumnQdrantRepository
     value_es_repository: ValueESRepository

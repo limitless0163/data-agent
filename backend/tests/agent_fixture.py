@@ -1,4 +1,4 @@
-"""Deterministic external collaborators; the production graph and prompts stay real."""
+"""以固定响应替换外部依赖，保留真实执行图与提示词。"""
 
 from contextlib import contextmanager
 from decimal import Decimal
@@ -94,7 +94,7 @@ def collaborators(mocker=None):
                 }
             )
 
-        # E2E runs outside pytest; use simple local async implementations.
+        # E2E 进程不使用 pytest fixture，改用本地异步实现。
         def method(value):
             async def invoke(*args, **kwargs):
                 return value(*args, **kwargs) if callable(value) else value

@@ -7,9 +7,11 @@ export async function POST(request: Request) {
       headers: { "Content-Type": "application/json", "Cache-Control": "no-cache" },
       body: await request.text(),
       cache: "no-store",
+      // 将客户端取消信号传给上游，停止对应的后端请求。
       signal: request.signal,
     });
 
+    // 直接透传响应流，避免缓冲完整结果后才显示进度。
     return new Response(upstream.body, {
       status: upstream.status,
       headers: {
