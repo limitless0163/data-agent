@@ -3,8 +3,17 @@
 <p align="center">Ask questions in Chinese. Get answers from your data warehouse.</p>
 
 <p align="center">
-  <a href="./README.md">English</a> |
+  English |
   <a href="./README_zh.md">简体中文</a>
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Python-3.11.2-3776AB?logo=python&amp;logoColor=white" alt="Python 3.11.2">
+  <img src="https://img.shields.io/badge/FastAPI-009688?logo=fastapi&amp;logoColor=white" alt="FastAPI">
+  <img src="https://img.shields.io/badge/Next.js-16-000000?logo=nextdotjs&amp;logoColor=white" alt="Next.js 16">
+  <img src="https://img.shields.io/badge/React-19-149ECA?logo=react&amp;logoColor=white" alt="React 19">
+  <img src="https://img.shields.io/badge/LangGraph-1-1C3C3C" alt="LangGraph 1">
+  <a href="./LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="MIT License"></a>
 </p>
 
 ## Overview
@@ -22,14 +31,6 @@ The included retail dataset covers orders, customers, products, regions, and dat
 - **Configurable knowledge:** define table descriptions, field aliases, and metrics in YAML.
 
 ## Tech Stack
-
-<p>
-  <img src="https://img.shields.io/badge/Python-3.11.2-3776AB?logo=python&amp;logoColor=white" alt="Python 3.11.2">
-  <img src="https://img.shields.io/badge/FastAPI-009688?logo=fastapi&amp;logoColor=white" alt="FastAPI">
-  <img src="https://img.shields.io/badge/Next.js-16-000000?logo=nextdotjs&amp;logoColor=white" alt="Next.js 16">
-  <img src="https://img.shields.io/badge/React-19-149ECA?logo=react&amp;logoColor=white" alt="React 19">
-  <img src="https://img.shields.io/badge/LangGraph-1-1C3C3C" alt="LangGraph 1">
-</p>
 
 | Layer | Technologies |
 | --- | --- |
@@ -114,3 +115,7 @@ Native development and tests use Python 3.11.2, uv, Node 22.22.2+ (22.x), and np
 - [Implementation notes (Chinese)](docs/DATA-AGENT.md) — metadata knowledge base and agent internals.
 - [Directory conventions](docs/ARCHITECTURE_INSTRUCTIONS.md) — repository organization.
 - [Agent guidance](AGENTS.md) — repository orientation and module guides.
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).

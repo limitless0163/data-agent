@@ -4,7 +4,16 @@
 
 <p align="center">
   <a href="./README.md">English</a> |
-  <a href="./README_zh.md">简体中文</a>
+  简体中文
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Python-3.11.2-3776AB?logo=python&amp;logoColor=white" alt="Python 3.11.2">
+  <img src="https://img.shields.io/badge/FastAPI-009688?logo=fastapi&amp;logoColor=white" alt="FastAPI">
+  <img src="https://img.shields.io/badge/Next.js-16-000000?logo=nextdotjs&amp;logoColor=white" alt="Next.js 16">
+  <img src="https://img.shields.io/badge/React-19-149ECA?logo=react&amp;logoColor=white" alt="React 19">
+  <img src="https://img.shields.io/badge/LangGraph-1-1C3C3C" alt="LangGraph 1">
+  <a href="./LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="MIT License"></a>
 </p>
 
 ## 项目概述
@@ -22,14 +31,6 @@ data-agent 是一个将自然语言转换为 SQL 的 Web 应用，帮助用户�
 - **可配置知识库：** 使用 YAML 定义表描述、字段别名和指标。
 
 ## 技术栈
-
-<p>
-  <img src="https://img.shields.io/badge/Python-3.11.2-3776AB?logo=python&amp;logoColor=white" alt="Python 3.11.2">
-  <img src="https://img.shields.io/badge/FastAPI-009688?logo=fastapi&amp;logoColor=white" alt="FastAPI">
-  <img src="https://img.shields.io/badge/Next.js-16-000000?logo=nextdotjs&amp;logoColor=white" alt="Next.js 16">
-  <img src="https://img.shields.io/badge/React-19-149ECA?logo=react&amp;logoColor=white" alt="React 19">
-  <img src="https://img.shields.io/badge/LangGraph-1-1C3C3C" alt="LangGraph 1">
-</p>
 
 | 层级 | 技术 |
 | --- | --- |
@@ -114,3 +115,7 @@ macOS 上命令会按需打开 Docker Desktop；其他系统请先启动 Docker 
 - [实现说明（中文）](docs/DATA-AGENT.md) — 元数据知识库与 Agent 内部实现。
 - [目录规范](docs/ARCHITECTURE_INSTRUCTIONS.md) — 仓库组织方式。
 - [Agent 协作指南](AGENTS.md) — 仓库概览与模块指南。
+
+## 许可证
+
+本项目基于 [MIT License](LICENSE) 开源。
